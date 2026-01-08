@@ -120,19 +120,19 @@ function renderLayers() {
     layerDiv.className = 'image-layer';
     layerDiv.dataset.index = index;
 
+    // Marcar visualmente la capa seleccionada
+    if (index === state.selectedLayerIndex) {
+      layerDiv.classList.add('selected-layer');
+    }
+
     const img = document.createElement('img');
     img.src = imageData.src;
     img.style.opacity = imageData.opacity / 100;
 
-    // Marcar visualmente la capa seleccionada
-    if (index === state.selectedLayerIndex) {
-      img.classList.add('selected-layer');
-    }
-
     // Aplicar filtros de imagen
-    const layerBrightness = imageData.brightness || 100;
-    const layerContrast = imageData.contrast || 100;
-    const layerSaturation = imageData.saturation || 100;
+    const layerBrightness = imageData.brightness !== undefined ? imageData.brightness : 100;
+    const layerContrast = imageData.contrast !== undefined ? imageData.contrast : 100;
+    const layerSaturation = imageData.saturation !== undefined ? imageData.saturation : 100;
     img.style.filter = `brightness(${layerBrightness}%) contrast(${layerContrast}%) saturate(${layerSaturation}%)`;
 
     // Aplicar zoom global y escala individual
