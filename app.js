@@ -191,9 +191,12 @@ function renderLayersList() {
             </div>
         `;
 
-    // Hacer el item arrastrable
-    layerItem.draggable = true;
+    // NO hacer el item completo arrastrable
     layerItem.dataset.index = index;
+
+    // Solo hacer arrastrable el header (nombre de la capa)
+    const layerHeader = layerItem.querySelector('.layer-header');
+    layerHeader.draggable = true;
 
     // Event listeners
     layerItem.addEventListener('click', (e) => {
@@ -202,14 +205,14 @@ function renderLayersList() {
       }
     });
 
-    // Drag and drop para reordenar
-    layerItem.addEventListener('dragstart', (e) => {
+    // Drag and drop para reordenar - solo en el header
+    layerHeader.addEventListener('dragstart', (e) => {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', index);
       layerItem.classList.add('dragging');
     });
 
-    layerItem.addEventListener('dragend', (e) => {
+    layerHeader.addEventListener('dragend', (e) => {
       layerItem.classList.remove('dragging');
       // Limpiar todos los indicadores de drop
       document.querySelectorAll('.layer-item').forEach(item => {
