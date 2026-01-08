@@ -704,6 +704,27 @@ function handleKeyboard(e) {
     return;
   }
 
+  // Cambiar capa activa con Tab
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (state.images.length === 0) return;
+
+    if (e.shiftKey) {
+      // Shift+Tab: capa anterior
+      const newIndex = state.selectedLayerIndex === null || state.selectedLayerIndex === 0
+        ? state.images.length - 1
+        : state.selectedLayerIndex - 1;
+      selectLayer(newIndex);
+    } else {
+      // Tab: siguiente capa
+      const newIndex = state.selectedLayerIndex === null || state.selectedLayerIndex === state.images.length - 1
+        ? 0
+        : state.selectedLayerIndex + 1;
+      selectLayer(newIndex);
+    }
+    return;
+  }
+
   // Alinear por referencias con tecla 'A'
   if (key === 'a') {
     e.preventDefault();
