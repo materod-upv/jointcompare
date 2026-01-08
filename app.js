@@ -140,8 +140,11 @@ function renderLayers() {
 
     // Event listeners para drag
     layerDiv.addEventListener('mousedown', (e) => {
-      if (state.isMarkingReference && index === state.selectedLayerIndex) {
-        setReferencePoint(e, index, layerDiv);
+      if (state.isMarkingReference) {
+        // En modo de marcado de referencia, solo marcar puntos, no arrastrar
+        if (index === state.selectedLayerIndex) {
+          setReferencePoint(e, index, layerDiv);
+        }
       } else {
         startDrag(e, index);
       }
