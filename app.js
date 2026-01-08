@@ -135,11 +135,9 @@ function renderLayers() {
     const layerSaturation = imageData.saturation !== undefined ? imageData.saturation : 100;
     img.style.filter = `brightness(${layerBrightness}%) contrast(${layerContrast}%) saturate(${layerSaturation}%)`;
 
-    // Aplicar zoom global y escala individual
-    const zoom = state.globalZoom / 100;
+    // Aplicar escala individual de la capa
     const layerScale = (imageData.scale || 100) / 100;
-    const finalScale = zoom * layerScale;
-    layerDiv.style.transform = `translate(calc(-50% + ${imageData.offsetX}px), calc(-50% + ${imageData.offsetY}px)) scale(${finalScale})`;
+    layerDiv.style.transform = `translate(calc(-50% + ${imageData.offsetX}px), calc(-50% + ${imageData.offsetY}px)) scale(${layerScale})`;
 
     layerDiv.appendChild(img);
 
@@ -475,13 +473,19 @@ function handleWheelZoom(e) {
   state.globalZoom = newZoom;
   elements.zoomControl.value = newZoom;
   elements.zoomValue.textContent = newZoom + '%';
-  renderLayers();
+
+  // Aplicar zoom al contenedor completo
+  const zoom = newZoom / 100;
+  elements.layersContainer.style.transform = `scale(${zoom})`;
 }
 
 function handleGlobalZoom(e) {
   state.globalZoom = parseFloat(e.target.value);
   elements.zoomValue.textContent = state.globalZoom + '%';
-  renderLayers();
+
+  // Aplicar zoom al contenedor completo
+  const zoom = state.globalZoom / 100;
+  elements.layersContainer.style.transform = `scale(${zoom})`;
 }
 
 function handleBrightnessControl(e) {
