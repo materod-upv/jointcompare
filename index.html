@@ -39,20 +39,13 @@
             </div>
 
             <div class="control-section">
-                <h3>Controles de Visualización</h3>
-                
-                <button id="autoAdjustBrightness" class="btn-secondary">Igualar Tonos</button>
-            </div>
-
-            <div class="control-section">
                 <h3>Ajustes de Capa</h3>
                 <div class="alignment-instructions">
                     Selecciona una capa para ajustar sus propiedades
                 </div>
                 
-                <button id="markReferenceBtn" class="btn-secondary">Marcar Punto de Referencia</button>
-                <button id="alignByReferenceBtn" class="btn-secondary" style="margin-top: 6px;">Alinear por Referencias</button>
-                
+                <button id="autoAdjustBrightness" class="btn-secondary">Igualar Tonos</button>
+
                 <div class="control-group" style="margin-top: 10px;">
                     <label for="brightnessControl">Brillo</label>
                     <input type="range" id="brightnessControl" min="0" max="200" value="100" step="1">
@@ -70,8 +63,11 @@
                     <input type="range" id="saturationControl" min="0" max="200" value="100" step="1">
                     <span id="saturationValue">100%</span>
                 </div>
+
+                <button id="markReferenceBtn" class="btn-secondary" style="margin-top: 6px;">Marcar Punto de Referencia</button>
+                <button id="alignByReferenceBtn" class="btn-secondary" style="margin-top: 6px;">Alinear por Referencias</button>
                 
-                <div class="control-group">
+                <div class="control-group" style="margin-top: 10px;">
                     <label for="scaleControl">Escala</label>
                     <input type="range" id="scaleControl" min="50" max="200" value="100" step="1">
                     <span id="scaleValue">100%</span>
@@ -81,7 +77,7 @@
                     <button class="btn-arrow" data-direction="up">▲</button>
                     <div class="arrow-row">
                         <button class="btn-arrow" data-direction="left">◄</button>
-                        <button id="resetPosition" class="btn-secondary">Centro</button>
+                        <button id="resetPosition" class="btn-arrow-center">●</button>
                         <button class="btn-arrow" data-direction="right">►</button>
                     </div>
                     <button class="btn-arrow" data-direction="down">▼</button>
