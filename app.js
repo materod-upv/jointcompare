@@ -401,7 +401,10 @@ function toggleLayerLocked(index, locked) {
   // Si es la capa seleccionada, actualizar controles
   if (index === state.selectedLayerIndex) {
     elements.brightnessControl.disabled = locked;
+    elements.contrastControl.disabled = locked;
+    elements.saturationControl.disabled = locked;
     elements.scaleControl.disabled = locked;
+    elements.rotationControl.disabled = locked;
   }
   renderLayersList();
 }
@@ -916,7 +919,7 @@ function alignByReferences() {
 
   // Alinear todas las demás capas
   state.images.forEach((imageData, index) => {
-    if (index === baseIndex || !imageData.referencePoints || imageData.referencePoints.length === 0) {
+    if (index === baseIndex || !imageData.referencePoints || imageData.referencePoints.length === 0 || imageData.locked) {
       return;
     }
 
