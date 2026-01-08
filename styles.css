@@ -30,6 +30,14 @@ header {
     color: white;
     padding: 12px 20px;
     border-bottom: 1px solid #34495e;
+    position: relative;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 header h1 {
@@ -436,35 +444,162 @@ button:disabled {
     position: absolute;
     bottom: 20px;
     right: 20px;
-    background: white;
-    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 8px 10px;
     border-radius: 4px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     z-index: 1000;
     user-select: none;
 }
 
-.zoom-panel-floating label {
-    font-size: 11px;
+.pan-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.pan-row {
+    display: flex;
+    gap: 1px;
+}
+
+.btn-pan {
+    width: 20px;
+    height: 20px;
+    background: rgba(245, 245, 245, 0.8);
+    border: 1px solid rgba(221, 221, 221, 0.8);
+    border-radius: 2px;
+    color: #666;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.btn-pan:hover {
+    background: rgba(232, 232, 232, 0.9);
+    border-color: #999;
+    color: #333;
+}
+
+.btn-pan:active {
+    background: rgba(216, 216, 216, 0.9);
+}
+
+.zoom-divider {
+    width: 1px;
+    height: 44px;
+    background: rgba(221, 221, 221, 0.6);
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.zoom-controls label {
+    font-size: 10px;
     font-weight: 600;
     color: #666;
     margin: 0;
 }
 
-.zoom-panel-floating input[type="range"] {
-    width: 120px;
+.zoom-controls input[type="range"] {
+    width: 90px;
     margin: 0;
 }
 
-.zoom-panel-floating span {
-    font-size: 11px;
+.zoom-controls span {
+    font-size: 10px;
     font-weight: 500;
     color: #666;
-    min-width: 38px;
+    min-width: 34px;
     text-align: right;
+}
+
+.help-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.help-button {
+    width: 24px;
+    height: 24px;
+    background: rgba(52, 152, 219, 0.9);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: help;
+    transition: all 0.2s;
+}
+
+.help-button:hover {
+    background: rgba(52, 152, 219, 1);
+    transform: scale(1.1);
+}
+
+.help-tooltip {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.98);
+    color: #2c3e50;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+}
+
+.help-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    right: 8px;
+    border: 6px solid transparent;
+    border-bottom-color: rgba(255, 255, 255, 0.98);
+}
+
+.help-icon:hover .help-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.help-tooltip strong {
+    color: #3498db;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.help-tooltip kbd {
+    background: #34495e;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Scrollbar personalizado */

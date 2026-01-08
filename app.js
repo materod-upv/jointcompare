@@ -68,6 +68,13 @@ function setupEventListeners() {
   // Panning con Shift + arrastrar
   elements.layersContainer.addEventListener('mousedown', handlePanStart);
 
+  // Botones de panning
+  document.getElementById('panUp').addEventListener('click', () => handlePanButton('up'));
+  document.getElementById('panDown').addEventListener('click', () => handlePanButton('down'));
+  document.getElementById('panLeft').addEventListener('click', () => handlePanButton('left'));
+  document.getElementById('panRight').addEventListener('click', () => handlePanButton('right'));
+  document.getElementById('panCenter').addEventListener('click', resetPan);
+
   // Cambiar cursor cuando se presiona/suelta Shift
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Shift' && !state.isPanning && !state.isMarkingReference) {
@@ -530,6 +537,36 @@ function stopPan() {
   document.querySelectorAll('.image-layer').forEach(layer => {
     layer.style.cursor = '';
   });
+}
+
+// Panning con botones
+function handlePanButton(direction) {
+  const step = 50; // píxeles por movimiento
+
+  switch (direction) {
+    case 'up':
+      state.panOffset.y += step;
+      break;
+    case 'down':
+      state.panOffset.y -= step;
+      break;
+    case 'left':
+      state.panOffset.x += step;
+      break;
+    case 'right':
+      state.panOffset.x -= step;
+      break;
+  }
+
+  // Aplicar transform con pan y zoom
+  const zoom = state.globalZoom / 100;
+  elements.layersContainer.style.transform = `translate(${state.panOffset.x}px, ${state.panOffset.y}px) scale(${zoom})`;
+}
+
+function resetPan() {
+  state.panOffset = { x: 0, y: 0 };
+  const zoom = state.globalZoom / 100;
+  elements.layersContainer.style.transform = `translate(0px, 0px) scale(${zoom})`;
 }
 
 // Controles globales

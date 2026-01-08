@@ -9,8 +9,21 @@
 <body>
     <div class="container">
         <header>
-            <h1>JointCompare</h1>
-            <p>Comparación visual de progreso de pacientes</p>
+            <div class="header-content">
+                <div>
+                    <h1>JointCompare</h1>
+                    <p>Comparación visual de progreso de pacientes</p>
+                </div>
+                <div class="help-icon">
+                    <span class="help-button">?</span>
+                    <div class="help-tooltip">
+                        <strong>Atajos de teclado:</strong><br>
+                        <kbd>Shift</kbd> + arrastrar = Pan<br>
+                        <kbd>Rueda</kbd> = Zoom<br>
+                        <kbd>↑↓←→</kbd> = Mover capa
+                    </div>
+                </div>
+            </div>
         </header>
 
         <div class="controls-panel">
@@ -83,9 +96,21 @@
             
             <!-- Panel flotante de zoom -->
             <div class="zoom-panel-floating">
-                <label>Zoom</label>
-                <input type="range" id="zoomControl" min="50" max="900" value="100" step="10">
-                <span id="zoomValue">100%</span>
+                <div class="pan-controls">
+                    <button class="btn-pan" id="panUp" title="Arriba">▲</button>
+                    <div class="pan-row">
+                        <button class="btn-pan" id="panLeft" title="Izquierda">◄</button>
+                        <button class="btn-pan" id="panCenter" title="Centrar">●</button>
+                        <button class="btn-pan" id="panRight" title="Derecha">►</button>
+                    </div>
+                    <button class="btn-pan" id="panDown" title="Abajo">▼</button>
+                </div>
+                <div class="zoom-divider"></div>
+                <div class="zoom-controls">
+                    <label>Zoom</label>
+                    <input type="range" id="zoomControl" min="50" max="900" value="100" step="10">
+                    <span id="zoomValue">100%</span>
+                </div>
             </div>
         </div>
     </div>
