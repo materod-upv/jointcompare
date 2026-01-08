@@ -170,10 +170,51 @@ function renderLayersList() {
             </div>
         `;
 
+    // Hacer el item arrastrable
+    layerItem.draggable = true;
+    layerItem.dataset.index = index;
+
     // Event listeners
     layerItem.addEventListener('click', (e) => {
       if (!e.target.closest('button') && !e.target.closest('input')) {
         selectLayer(index);
+      }
+    });
+
+    // Drag and drop para reordenar
+    layerItem.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index);
+      layerItem.classList.add('dragging');
+    });
+
+    layerItem.addEventListener('dragend', (e) => {
+      layerItem.classList.remove('dragging');
+      // Limpiar todos los indicadores de drop
+      document.querySelectorAll('.layer-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+    });
+
+    layerItem.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      layerItem.classList.add('drag-over');
+    });
+
+    layerItem.addEventListener('dragleave', (e) => {
+      layerItem.classList.remove('drag-over');
+    });
+
+    layerItem.addEventListener('drop', (e) => {
+      e.preventDefault();
+      layerItem.classList.remove('drag-over');
+      
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = index;
+      
+      if (fromIndex !== toIndex) {
+        reorderLayers(fromIndex, toIndex);
       }
     });
 
@@ -257,6 +298,25 @@ function toggleLayerLocked(index, locked) {
     elements.brightnessControl.disabled = locked;
     elements.scaleControl.disabled = locked;
   }
+  renderLayersList();
+}
+
+// Reordenar capas
+function reorderLayers(fromIndex, toIndex) {
+  // Mover elemento en el array
+  const [movedItem] = state.images.splice(fromIndex, 1);
+  state.images.splice(toIndex, 0, movedItem);
+  
+  // Actualizar selectedLayerIndex si es necesario
+  if (state.selectedLayerIndex === fromIndex) {
+    state.selectedLayerIndex = toIndex;
+  } else if (fromIndex < state.selectedLayerIndex && toIndex >= state.selectedLayerIndex) {
+    state.selectedLayerIndex--;
+  } else if (fromIndex > state.selectedLayerIndex && toIndex <= state.selectedLayerIndex) {
+    state.selectedLayerIndex++;
+  }
+  
+  renderLayers();
   renderLayersList();
 }
 

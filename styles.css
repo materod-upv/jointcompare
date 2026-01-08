@@ -162,6 +162,16 @@ button {
     opacity: 0.5;
 }
 
+.layer-item.dragging {
+    opacity: 0.4;
+    cursor: move;
+}
+
+.layer-item.drag-over {
+    border-top: 3px solid #2196f3;
+    margin-top: 3px;
+}
+
 .layer-item.locked .layer-name::after {
     content: " 🔒";
     font-size: 10px;
