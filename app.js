@@ -27,6 +27,8 @@ const elements = {
   saturationValue: document.getElementById('saturationValue'),
   scaleControl: document.getElementById('scaleControl'),
   scaleValue: document.getElementById('scaleValue'),
+  rotationControl: document.getElementById('rotationControl'),
+  rotationValue: document.getElementById('rotationValue'),
   resetPosition: document.getElementById('resetPosition'),
   arrowButtons: document.querySelectorAll('.btn-arrow'),
   autoAdjustBrightness: document.getElementById('autoAdjustBrightness'),
@@ -50,6 +52,7 @@ function setupEventListeners() {
   elements.contrastControl.addEventListener('input', handleContrastControl);
   elements.saturationControl.addEventListener('input', handleSaturationControl);
   elements.scaleControl.addEventListener('input', handleScaleControl);
+  elements.rotationControl.addEventListener('input', handleRotationControl);
   elements.resetPosition.addEventListener('click', resetSelectedLayerPosition);
   elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
   elements.markReferenceBtn.addEventListener('click', toggleMarkReferenceMode);
@@ -168,7 +171,8 @@ function renderLayers() {
 
     // Aplicar escala individual de la capa
     const layerScale = (imageData.scale || 100) / 100;
-    layerDiv.style.transform = `translate(calc(-50% + ${imageData.offsetX}px), calc(-50% + ${imageData.offsetY}px)) scale(${layerScale})`;
+    const layerRotation = imageData.rotation || 0;
+    layerDiv.style.transform = `translate(calc(-50% + ${imageData.offsetX}px), calc(-50% + ${imageData.offsetY}px)) scale(${layerScale}) rotate(${layerRotation}deg)`;
 
     layerDiv.appendChild(img);
 
@@ -354,6 +358,11 @@ function selectLayer(index) {
   elements.scaleValue.textContent = Math.round(scale) + '%';
   elements.scaleControl.disabled = isLocked;
 
+  const rotation = state.images[index].rotation || 0;
+  elements.rotationControl.value = rotation;
+  elements.rotationValue.textContent = Math.round(rotation) + '°';
+  elements.rotationControl.disabled = isLocked;
+
   renderLayers();
   renderLayersList();
 }
@@ -462,6 +471,10 @@ function removeLayer(index) {
     elements.scaleControl.value = selectedImage.scale || 100;
     elements.scaleValue.textContent = Math.round(selectedImage.scale || 100) + '%';
     elements.scaleControl.disabled = isLocked;
+
+    elements.rotationControl.value = selectedImage.rotation || 0;
+    elements.rotationValue.textContent = Math.round(selectedImage.rotation || 0) + '°';
+    elements.rotationControl.disabled = isLocked;
   }
 }
 
@@ -567,8 +580,10 @@ function handlePanButton(direction) {
 
 function resetPan() {
   state.panOffset = { x: 0, y: 0 };
-  const zoom = state.globalZoom / 100;
-  elements.layersContainer.style.transform = `translate(0px, 0px) scale(${zoom})`;
+  state.globalZoom = 100;
+  elements.zoomControl.value = 100;
+  elements.zoomValue.textContent = '100%';
+  elements.layersContainer.style.transform = `translate(0px, 0px) scale(1)`;
 }
 
 // Controles globales
@@ -653,6 +668,20 @@ function handleScaleControl(e) {
   renderLayers();
 }
 
+function handleRotationControl(e) {
+  if (state.selectedLayerIndex === null) {
+    alert('Selecciona una capa primero');
+    elements.rotationControl.value = 0;
+    elements.rotationValue.textContent = '0°';
+    return;
+  }
+
+  const rotation = parseFloat(e.target.value);
+  state.images[state.selectedLayerIndex].rotation = rotation;
+  elements.rotationValue.textContent = Math.round(rotation) + '°';
+  renderLayers();
+}
+
 // Alineación con teclado/botones
 function handleKeyboard(e) {
   if (state.selectedLayerIndex === null) return;
@@ -718,6 +747,15 @@ function resetSelectedLayerPosition() {
 
   state.images[state.selectedLayerIndex].offsetX = 0;
   state.images[state.selectedLayerIndex].offsetY = 0;
+  state.images[state.selectedLayerIndex].scale = 100;
+  state.images[state.selectedLayerIndex].rotation = 0;
+
+  // Actualizar controles
+  elements.scaleControl.value = 100;
+  elements.scaleValue.textContent = '100%';
+  elements.rotationControl.value = 0;
+  elements.rotationValue.textContent = '0°';
+
   renderLayers();
 }
 
@@ -761,6 +799,7 @@ function updateControlsState() {
   elements.contrastControl.disabled = !hasImages;
   elements.saturationControl.disabled = !hasImages;
   elements.scaleControl.disabled = !hasImages;
+  elements.rotationControl.disabled = !hasImages;
   elements.resetPosition.disabled = !hasImages;
 
   // Botones de flechas
