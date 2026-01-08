@@ -726,6 +726,14 @@ function autoAdjustBrightness() {
 
     renderLayers();
     renderLayersList();
+
+    // Actualizar controles si hay una capa seleccionada
+    if (state.selectedLayerIndex !== null) {
+      const selectedBrightness = state.images[state.selectedLayerIndex].brightness || 100;
+      elements.brightnessControl.value = selectedBrightness;
+      elements.brightnessValue.textContent = Math.round(selectedBrightness) + '%';
+    }
+
     alert('Iluminación ajustada automáticamente para igualar tonos');
   });
 }
