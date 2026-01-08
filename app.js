@@ -3,8 +3,6 @@ const state = {
   images: [],
   selectedLayerIndex: null,
   globalZoom: 100,
-  globalBrightness: 100,
-  globalContrast: 100,
   isDragging: false,
   dragStart: { x: 0, y: 0 }
 };
@@ -18,13 +16,9 @@ const elements = {
   layersContainer: document.getElementById('layersContainer'),
   zoomControl: document.getElementById('zoomControl'),
   zoomValue: document.getElementById('zoomValue'),
-  brightnessControl: document.getElementById('brightnessControl'),
-  brightnessValue: document.getElementById('brightnessValue'),
-  contrastControl: document.getElementById('contrastControl'),
-  contrastValue: document.getElementById('contrastValue'),
-  resetControls: document.getElementById('resetControls'),
   resetPosition: document.getElementById('resetPosition'),
-  arrowButtons: document.querySelectorAll('.btn-arrow')
+  arrowButtons: document.querySelectorAll('.btn-arrow'),
+  autoAdjustBrightness: document.getElementById('autoAdjustBrightness')
 };
 
 // Inicialización
@@ -38,10 +32,8 @@ function setupEventListeners() {
   elements.clearPatient.addEventListener('click', clearPatient);
 
   elements.zoomControl.addEventListener('input', handleGlobalZoom);
-  elements.brightnessControl.addEventListener('input', handleGlobalBrightness);
-  elements.contrastControl.addEventListener('input', handleGlobalContrast);
-  elements.resetControls.addEventListener('click', resetGlobalControls);
   elements.resetPosition.addEventListener('click', resetSelectedLayerPosition);
+  elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
 
   elements.arrowButtons.forEach(btn => {
     btn.addEventListener('click', () => handleArrowKey(btn.dataset.direction));
@@ -78,6 +70,7 @@ function addImageLayer(src, name) {
     opacity: 50,
     offsetX: 0,
     offsetY: 0,
+    brightness: 100,
     visible: true
   };
 
@@ -105,12 +98,9 @@ function renderLayers() {
     img.src = imageData.src;
     img.style.opacity = imageData.opacity / 100;
 
-    // Aplicar filtros globales
-    const filters = [
-      `brightness(${state.globalBrightness}%)`,
-      `contrast(${state.globalContrast}%)`
-    ];
-    img.style.filter = filters.join(' ');
+    // Aplicar filtro de brillo de capa
+    const layerBrightness = imageData.brightness || 100;
+    img.style.filter = `brightness(${layerBrightness}%)`;
 
     // Aplicar zoom y posición
     const zoom = state.globalZoom / 100;
@@ -150,6 +140,12 @@ function renderLayersList() {
                     <span>${imageData.opacity}%</span>
                 </div>
                 <div class="layer-control-group">
+                    <label>Brillo</label>
+                    <input type="range" min="50" max="200" value="${imageData.brightness || 100}" 
+                           data-index="${index}" data-control="brightness">
+                    <span>${Math.round(imageData.brightness || 100)}%</span>
+                </div>
+                <div class="layer-control-group">
                     <label>
                         <input type="checkbox" ${imageData.visible ? 'checked' : ''} 
                                data-index="${index}" data-control="visibility">
@@ -178,6 +174,12 @@ function renderLayersList() {
       e.target.nextElementSibling.textContent = e.target.value + '%';
     });
 
+    const brightnessInput = layerItem.querySelector('[data-control="brightness"]');
+    brightnessInput.addEventListener('input', (e) => {
+      updateLayerBrightness(index, e.target.value);
+      e.target.nextElementSibling.textContent = Math.round(e.target.value) + '%';
+    });
+
     const visibilityCheckbox = layerItem.querySelector('[data-control="visibility"]');
     visibilityCheckbox.addEventListener('change', (e) => {
       toggleLayerVisibility(index, e.target.checked);
@@ -196,6 +198,12 @@ function selectLayer(index) {
 // Actualizar opacidad de capa
 function updateLayerOpacity(index, value) {
   state.images[index].opacity = parseFloat(value);
+  renderLayers();
+}
+
+// Actualizar brillo de capa
+function updateLayerBrightness(index, value) {
+  state.images[index].brightness = parseFloat(value);
   renderLayers();
 }
 
@@ -256,33 +264,6 @@ function stopDrag() {
 function handleGlobalZoom(e) {
   state.globalZoom = parseFloat(e.target.value);
   elements.zoomValue.textContent = state.globalZoom + '%';
-  renderLayers();
-}
-
-function handleGlobalBrightness(e) {
-  state.globalBrightness = parseFloat(e.target.value);
-  elements.brightnessValue.textContent = state.globalBrightness + '%';
-  renderLayers();
-}
-
-function handleGlobalContrast(e) {
-  state.globalContrast = parseFloat(e.target.value);
-  elements.contrastValue.textContent = state.globalContrast + '%';
-  renderLayers();
-}
-
-function resetGlobalControls() {
-  state.globalZoom = 100;
-  state.globalBrightness = 100;
-  state.globalContrast = 100;
-
-  elements.zoomControl.value = 100;
-  elements.zoomValue.textContent = '100%';
-  elements.brightnessControl.value = 100;
-  elements.brightnessValue.textContent = '100%';
-  elements.contrastControl.value = 100;
-  elements.contrastValue.textContent = '100%';
-
   renderLayers();
 }
 
@@ -360,6 +341,81 @@ function clearPatient() {
 // Actualizar contador de imágenes
 function updateImageCount() {
   elements.imageCount.textContent = state.images.length;
+}
+
+// Ajuste automático de iluminación basado en tono de piel
+function autoAdjustBrightness() {
+  if (state.images.length === 0) {
+    alert('Carga algunas fotos primero');
+    return;
+  }
+
+  // Analizar el brillo promedio de cada imagen
+  const brightnessPromises = state.images.map((imageData, index) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const brightness = analyzeImageBrightness(img);
+        resolve({ index, brightness });
+      };
+      img.src = imageData.src;
+    });
+  });
+
+  Promise.all(brightnessPromises).then(results => {
+    // Calcular brillo promedio de todas las imágenes
+    const avgBrightness = results.reduce((sum, r) => sum + r.brightness, 0) / results.length;
+
+    // Ajustar cada imagen para que coincida con el promedio
+    results.forEach(({ index, brightness }) => {
+      // Calcular factor de ajuste (cuánto más claro/oscuro está vs el promedio)
+      const adjustmentFactor = avgBrightness / brightness;
+      // Convertir a porcentaje (100 = sin cambio)
+      state.images[index].brightness = Math.min(200, Math.max(50, adjustmentFactor * 100));
+    });
+
+    renderLayers();
+    renderLayersList();
+    alert('Iluminación ajustada automáticamente para igualar tonos');
+  });
+}
+
+// Analizar brillo promedio de una imagen
+function analyzeImageBrightness(img) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Usar una versión reducida para análisis rápido
+  const maxSize = 200;
+  const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+  canvas.width = img.width * scale;
+  canvas.height = img.height * scale;
+
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  try {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    let totalBrightness = 0;
+    let pixelCount = 0;
+
+    // Muestrear cada 4 píxeles para mayor velocidad
+    for (let i = 0; i < data.length; i += 16) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+
+      // Calcular luminancia percibida
+      const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+      totalBrightness += brightness;
+      pixelCount++;
+    }
+
+    return totalBrightness / pixelCount;
+  } catch (e) {
+    console.error('Error analizando imagen:', e);
+    return 128; // Valor medio por defecto
+  }
 }
 
 // Iniciar aplicación
