@@ -538,6 +538,12 @@ button:disabled {
     background: rgba(221, 221, 221, 0.6);
 }
 
+.zoom-reference-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .zoom-controls {
     display: flex;
     align-items: center;

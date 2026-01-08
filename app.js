@@ -7,7 +7,8 @@ const state = {
   dragStart: { x: 0, y: 0 },
   isMarkingReference: false,
   isPanning: false,
-  panOffset: { x: 0, y: 0 }
+  panOffset: { x: 0, y: 0 },
+  showReferencePoints: true // Mostrar u ocultar puntos de referencia
 };
 
 // Referencias a elementos del DOM
@@ -33,7 +34,8 @@ const elements = {
   arrowButtons: document.querySelectorAll('.btn-arrow'),
   autoAdjustBrightness: document.getElementById('autoAdjustBrightness'),
   markReferenceBtn: document.getElementById('markReferenceBtn'),
-  alignByReferenceBtn: document.getElementById('alignByReferenceBtn')
+  alignByReferenceBtn: document.getElementById('alignByReferenceBtn'),
+  showReferencePointsCheckbox: document.getElementById('showReferencePoints')
 };
 
 // Inicialización
@@ -57,6 +59,10 @@ function setupEventListeners() {
   elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
   elements.markReferenceBtn.addEventListener('click', toggleMarkReferenceMode);
   elements.alignByReferenceBtn.addEventListener('click', alignByReferences);
+  elements.showReferencePointsCheckbox.addEventListener('change', (e) => {
+    state.showReferencePoints = e.target.checked;
+    renderLayers();
+  });
 
   elements.arrowButtons.forEach(btn => {
     btn.addEventListener('click', () => handleArrowKey(btn.dataset.direction));
@@ -176,8 +182,8 @@ function renderLayers() {
 
     layerDiv.appendChild(img);
 
-    // Mostrar puntos de referencia si existen
-    if (imageData.referencePoints && imageData.referencePoints.length > 0) {
+    // Mostrar puntos de referencia si existen y están habilitados
+    if (state.showReferencePoints && imageData.referencePoints && imageData.referencePoints.length > 0) {
       imageData.referencePoints.forEach((refPoint, refIndex) => {
         const refMarker = document.createElement('div');
         refMarker.className = refIndex === 0 ? 'reference-marker' : 'reference-marker reference-marker-2';

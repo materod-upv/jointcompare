@@ -108,10 +108,18 @@
                     <button class="btn-pan" id="panDown" title="Abajo">▼</button>
                 </div>
                 <div class="zoom-divider"></div>
-                <div class="zoom-controls">
-                    <label>Zoom</label>
-                    <input type="range" id="zoomControl" min="50" max="900" value="100" step="10">
-                    <span id="zoomValue">100%</span>
+                <div class="zoom-reference-container">
+                    <div class="zoom-controls">
+                        <label>Zoom</label>
+                        <input type="range" id="zoomControl" min="50" max="900" value="100" step="10">
+                        <span id="zoomValue">100%</span>
+                    </div>
+                    <div class="control-group" style="margin-top: 8px;">
+                        <label style="font-size: 11px;">
+                            <input type="checkbox" id="showReferencePoints" checked>
+                            Mostrar puntos de referencia
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
