@@ -19,6 +19,10 @@ const elements = {
   zoomValue: document.getElementById('zoomValue'),
   brightnessControl: document.getElementById('brightnessControl'),
   brightnessValue: document.getElementById('brightnessValue'),
+  contrastControl: document.getElementById('contrastControl'),
+  contrastValue: document.getElementById('contrastValue'),
+  saturationControl: document.getElementById('saturationControl'),
+  saturationValue: document.getElementById('saturationValue'),
   scaleControl: document.getElementById('scaleControl'),
   scaleValue: document.getElementById('scaleValue'),
   resetPosition: document.getElementById('resetPosition'),
@@ -41,6 +45,8 @@ function setupEventListeners() {
 
   elements.zoomControl.addEventListener('input', handleGlobalZoom);
   elements.brightnessControl.addEventListener('input', handleBrightnessControl);
+  elements.contrastControl.addEventListener('input', handleContrastControl);
+  elements.saturationControl.addEventListener('input', handleSaturationControl);
   elements.scaleControl.addEventListener('input', handleScaleControl);
   elements.resetPosition.addEventListener('click', resetSelectedLayerPosition);
   elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
@@ -86,6 +92,8 @@ function addImageLayer(src, name) {
     offsetX: 0,
     offsetY: 0,
     brightness: 100,
+    contrast: 100,
+    saturation: 100,
     scale: 100,
     locked: false,
     visible: true,
@@ -121,9 +129,11 @@ function renderLayers() {
       img.classList.add('selected-layer');
     }
 
-    // Aplicar filtro de brillo de capa
+    // Aplicar filtros de imagen
     const layerBrightness = imageData.brightness || 100;
-    img.style.filter = `brightness(${layerBrightness}%)`;
+    const layerContrast = imageData.contrast || 100;
+    const layerSaturation = imageData.saturation || 100;
+    img.style.filter = `brightness(${layerBrightness}%) contrast(${layerContrast}%) saturate(${layerSaturation}%)`;
 
     // Aplicar zoom global y escala individual
     const zoom = state.globalZoom / 100;
@@ -293,6 +303,16 @@ function selectLayer(index) {
   elements.brightnessValue.textContent = Math.round(brightness) + '%';
   elements.brightnessControl.disabled = isLocked;
 
+  const contrast = state.images[index].contrast || 100;
+  elements.contrastControl.value = contrast;
+  elements.contrastValue.textContent = Math.round(contrast) + '%';
+  elements.contrastControl.disabled = isLocked;
+
+  const saturation = state.images[index].saturation || 100;
+  elements.saturationControl.value = saturation;
+  elements.saturationValue.textContent = Math.round(saturation) + '%';
+  elements.saturationControl.disabled = isLocked;
+
   const scale = state.images[index].scale || 100;
   elements.scaleControl.value = scale;
   elements.scaleValue.textContent = Math.round(scale) + '%';
@@ -395,6 +415,14 @@ function removeLayer(index) {
     elements.brightnessValue.textContent = Math.round(selectedImage.brightness || 100) + '%';
     elements.brightnessControl.disabled = isLocked;
 
+    elements.contrastControl.value = selectedImage.contrast || 100;
+    elements.contrastValue.textContent = Math.round(selectedImage.contrast || 100) + '%';
+    elements.contrastControl.disabled = isLocked;
+
+    elements.saturationControl.value = selectedImage.saturation || 100;
+    elements.saturationValue.textContent = Math.round(selectedImage.saturation || 100) + '%';
+    elements.saturationControl.disabled = isLocked;
+
     elements.scaleControl.value = selectedImage.scale || 100;
     elements.scaleValue.textContent = Math.round(selectedImage.scale || 100) + '%';
     elements.scaleControl.disabled = isLocked;
@@ -467,6 +495,34 @@ function handleBrightnessControl(e) {
   const brightness = parseFloat(e.target.value);
   state.images[state.selectedLayerIndex].brightness = brightness;
   elements.brightnessValue.textContent = Math.round(brightness) + '%';
+  renderLayers();
+}
+
+function handleContrastControl(e) {
+  if (state.selectedLayerIndex === null) {
+    alert('Selecciona una capa primero');
+    elements.contrastControl.value = 100;
+    elements.contrastValue.textContent = '100%';
+    return;
+  }
+
+  const contrast = parseFloat(e.target.value);
+  state.images[state.selectedLayerIndex].contrast = contrast;
+  elements.contrastValue.textContent = Math.round(contrast) + '%';
+  renderLayers();
+}
+
+function handleSaturationControl(e) {
+  if (state.selectedLayerIndex === null) {
+    alert('Selecciona una capa primero');
+    elements.saturationControl.value = 100;
+    elements.saturationValue.textContent = '100%';
+    return;
+  }
+
+  const saturation = parseFloat(e.target.value);
+  state.images[state.selectedLayerIndex].saturation = saturation;
+  elements.saturationValue.textContent = Math.round(saturation) + '%';
   renderLayers();
 }
 
@@ -587,6 +643,8 @@ function updateControlsState() {
   elements.markReferenceBtn.disabled = !hasImages;
   elements.alignByReferenceBtn.disabled = !hasImages;
   elements.brightnessControl.disabled = !hasImages;
+  elements.contrastControl.disabled = !hasImages;
+  elements.saturationControl.disabled = !hasImages;
   elements.scaleControl.disabled = !hasImages;
   elements.resetPosition.disabled = !hasImages;
 
