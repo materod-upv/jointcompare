@@ -449,6 +449,10 @@ button:disabled {
     z-index: 1000;
 }
 
+.reference-marker-2 {
+    background: rgba(0, 150, 255, 0.7);
+}
+
 .reference-marker::after {
     content: '';
     position: absolute;

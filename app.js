@@ -128,7 +128,7 @@ function addImageLayer(src, name) {
     scale: 100,
     locked: false,
     visible: true,
-    referencePoint: null
+    referencePoints: [] // Array de hasta 2 puntos {x, y}
   };
 
   state.images.push(imageData);
@@ -172,15 +172,17 @@ function renderLayers() {
 
     layerDiv.appendChild(img);
 
-    // Mostrar punto de referencia si existe
-    if (imageData.referencePoint) {
-      const refMarker = document.createElement('div');
-      refMarker.className = 'reference-marker';
-      // El punto está en píxeles desde el centro de la imagen original
-      // Como el layerDiv ya tiene scale aplicado, el marcador se escalará automáticamente
-      refMarker.style.left = `calc(50% + ${imageData.referencePoint.x}px)`;
-      refMarker.style.top = `calc(50% + ${imageData.referencePoint.y}px)`;
-      layerDiv.appendChild(refMarker);
+    // Mostrar puntos de referencia si existen
+    if (imageData.referencePoints && imageData.referencePoints.length > 0) {
+      imageData.referencePoints.forEach((refPoint, refIndex) => {
+        const refMarker = document.createElement('div');
+        refMarker.className = refIndex === 0 ? 'reference-marker' : 'reference-marker reference-marker-2';
+        // El punto está en píxeles desde el centro de la imagen original
+        // Como el layerDiv ya tiene scale aplicado, el marcador se escalará automáticamente
+        refMarker.style.left = `calc(50% + ${refPoint.x}px)`;
+        refMarker.style.top = `calc(50% + ${refPoint.y}px)`;
+        layerDiv.appendChild(refMarker);
+      });
     }
 
     // Event listeners para drag
@@ -780,9 +782,15 @@ function toggleMarkReferenceMode() {
     elements.markReferenceBtn.textContent = 'Cancelar Marcado';
     elements.markReferenceBtn.style.background = '#e74c3c';
     elements.layersContainer.style.cursor = 'crosshair';
-    alert('Haz clic en la imagen para marcar el punto de referencia');
+
+    const currentPoints = state.images[state.selectedLayerIndex].referencePoints || [];
+    if (currentPoints.length === 0) {
+      alert('Marca el primer punto de referencia (para posición)');
+    } else if (currentPoints.length === 1) {
+      alert('Marca el segundo punto de referencia (para escala)');
+    }
   } else {
-    elements.markReferenceBtn.textContent = 'Marcar Punto de Referencia';
+    elements.markReferenceBtn.textContent = 'Marcar Puntos de Referencia';
     elements.markReferenceBtn.style.background = '';
     elements.layersContainer.style.cursor = '';
   }
@@ -798,7 +806,6 @@ function setReferencePoint(e, index, layerDiv) {
   const rect = img.getBoundingClientRect();
 
   // Guardar la posición del clic como píxeles absolutos en el viewport
-  // Esto hace que sea independiente del zoom y más fácil de alinear
   const screenX = e.clientX;
   const screenY = e.clientY;
 
@@ -813,16 +820,26 @@ function setReferencePoint(e, index, layerDiv) {
   const relX = (screenX - imgCenterX) / totalScale;
   const relY = (screenY - imgCenterY) / totalScale;
 
-  state.images[index].referencePoint = {
-    x: relX,  // píxeles desde el centro de la imagen original
-    y: relY
-  };
+  // Inicializar array si no existe
+  if (!state.images[index].referencePoints) {
+    state.images[index].referencePoints = [];
+  }
 
-  // Desactivar modo de marcado
-  state.isMarkingReference = false;
-  elements.markReferenceBtn.textContent = 'Marcar Punto de Referencia';
-  elements.markReferenceBtn.style.background = '';
-  elements.layersContainer.style.cursor = '';
+  // Agregar punto (máximo 2)
+  if (state.images[index].referencePoints.length < 2) {
+    state.images[index].referencePoints.push({ x: relX, y: relY });
+  } else {
+    // Si ya hay 2, reemplazar el primero y empezar de nuevo
+    state.images[index].referencePoints = [{ x: relX, y: relY }];
+  }
+
+  // Si ya tenemos 2 puntos, desactivar modo de marcado
+  if (state.images[index].referencePoints.length === 2) {
+    state.isMarkingReference = false;
+    elements.markReferenceBtn.textContent = 'Marcar Puntos de Referencia';
+    elements.markReferenceBtn.style.background = '';
+    elements.layersContainer.style.cursor = '';
+  }
 
   renderLayers();
   renderLayersList();
@@ -830,38 +847,75 @@ function setReferencePoint(e, index, layerDiv) {
 
 // Alinear todas las capas por sus puntos de referencia
 function alignByReferences() {
-  const layersWithRef = state.images.filter(img => img.referencePoint !== null);
+  const layersWithRef = state.images.filter(img => img.referencePoints && img.referencePoints.length > 0);
 
   if (layersWithRef.length < 2) {
     alert('Necesitas marcar puntos de referencia en al menos 2 capas');
     return;
   }
 
-  // Usar la primera capa con referencia como base
+  // Usar la primera capa con referencias como base
   const baseLayer = layersWithRef[0];
   const baseIndex = state.images.indexOf(baseLayer);
+  const basePoints = baseLayer.referencePoints;
 
-  // Los puntos de referencia están en píxeles desde el centro de cada imagen original
-  // Para alinearlos, necesitamos que todos apunten a la misma posición en pantalla
+  // Si la base tiene 2 puntos, calcular distancia base
+  let baseDistance = null;
+  if (basePoints.length === 2) {
+    const dx = basePoints[1].x - basePoints[0].x;
+    const dy = basePoints[1].y - basePoints[0].y;
+    baseDistance = Math.sqrt(dx * dx + dy * dy);
+  }
 
-  // Posición absoluta del punto base teniendo en cuenta su escala
   const baseScale = (baseLayer.scale || 100) / 100;
-  const baseAbsX = baseLayer.referencePoint.x * baseScale + baseLayer.offsetX;
-  const baseAbsY = baseLayer.referencePoint.y * baseScale + baseLayer.offsetY;
+  const basePoint1 = basePoints[0];
+  const baseAbsX = basePoint1.x * baseScale + baseLayer.offsetX;
+  const baseAbsY = basePoint1.y * baseScale + baseLayer.offsetY;
 
   // Alinear todas las demás capas
   state.images.forEach((imageData, index) => {
-    if (index !== baseIndex && imageData.referencePoint) {
-      const scale = (imageData.scale || 100) / 100;
-
-      // Calcular el offset necesario para que este punto coincida con el base
-      imageData.offsetX = baseAbsX - (imageData.referencePoint.x * scale);
-      imageData.offsetY = baseAbsY - (imageData.referencePoint.y * scale);
+    if (index === baseIndex || !imageData.referencePoints || imageData.referencePoints.length === 0) {
+      return;
     }
+
+    const points = imageData.referencePoints;
+    const point1 = points[0];
+
+    // Si ambas capas tienen 2 puntos, calcular y ajustar escala
+    if (baseDistance && points.length === 2) {
+      const dx = points[1].x - points[0].x;
+      const dy = points[1].y - points[0].y;
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+      // Calcular la escala necesaria para que las distancias coincidan
+      const scaleRatio = baseDistance / currentDistance;
+      imageData.scale = Math.min(200, Math.max(50, scaleRatio * 100));
+    }
+
+    // Aplicar el nuevo scale para calcular la posición
+    const newScale = (imageData.scale || 100) / 100;
+
+    // Calcular el offset necesario para que el primer punto coincida con el base
+    imageData.offsetX = baseAbsX - (point1.x * newScale);
+    imageData.offsetY = baseAbsY - (point1.y * newScale);
   });
 
   renderLayers();
-  alert(`Alineadas ${layersWithRef.length} capas por sus puntos de referencia`);
+  renderLayersList();
+
+  // Actualizar control de escala si hay capa seleccionada
+  if (state.selectedLayerIndex !== null) {
+    const selected = state.images[state.selectedLayerIndex];
+    elements.scaleControl.value = selected.scale;
+    elements.scaleValue.textContent = Math.round(selected.scale) + '%';
+  }
+
+  const withTwoPoints = layersWithRef.filter(l => l.referencePoints.length === 2).length;
+  if (withTwoPoints > 1) {
+    alert(`Alineadas ${layersWithRef.length} capas (${withTwoPoints} con ajuste de escala)`);
+  } else {
+    alert(`Alineadas ${layersWithRef.length} capas por posición`);
+  }
 }
 
 // Ajuste automático de iluminación basado en tono de piel
