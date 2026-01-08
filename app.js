@@ -5,7 +5,9 @@ const state = {
   globalZoom: 100,
   isDragging: false,
   dragStart: { x: 0, y: 0 },
-  isMarkingReference: false
+  isMarkingReference: false,
+  isPanning: false,
+  panOffset: { x: 0, y: 0 }
 };
 
 // Referencias a elementos del DOM
@@ -62,6 +64,9 @@ function setupEventListeners() {
 
   // Zoom con rueda del ratón
   elements.layersContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
+
+  // Panning con Shift + arrastrar
+  elements.layersContainer.addEventListener('mousedown', handlePanStart);
 }
 
 // Manejo de carga de imágenes
@@ -462,6 +467,39 @@ function stopDrag() {
   document.removeEventListener('mouseup', stopDrag);
 }
 
+// Panning de la vista (Shift + arrastrar)
+function handlePanStart(e) {
+  // Solo iniciar pan si se mantiene Shift y no hay otros arrastres activos
+  if (e.shiftKey && !state.isMarkingReference && !state.isDragging) {
+    e.preventDefault();
+    state.isPanning = true;
+    state.dragStart = { x: e.clientX - state.panOffset.x, y: e.clientY - state.panOffset.y };
+
+    document.addEventListener('mousemove', handlePanDrag);
+    document.addEventListener('mouseup', stopPan);
+
+    elements.layersContainer.style.cursor = 'grabbing';
+  }
+}
+
+function handlePanDrag(e) {
+  if (!state.isPanning) return;
+
+  state.panOffset.x = e.clientX - state.dragStart.x;
+  state.panOffset.y = e.clientY - state.dragStart.y;
+
+  // Aplicar transform con pan y zoom
+  const zoom = state.globalZoom / 100;
+  elements.layersContainer.style.transform = `translate(${state.panOffset.x}px, ${state.panOffset.y}px) scale(${zoom})`;
+}
+
+function stopPan() {
+  state.isPanning = false;
+  document.removeEventListener('mousemove', handlePanDrag);
+  document.removeEventListener('mouseup', stopPan);
+  elements.layersContainer.style.cursor = '';
+}
+
 // Controles globales
 function handleWheelZoom(e) {
   e.preventDefault();
@@ -474,18 +512,18 @@ function handleWheelZoom(e) {
   elements.zoomControl.value = newZoom;
   elements.zoomValue.textContent = newZoom + '%';
 
-  // Aplicar zoom al contenedor completo
+  // Aplicar zoom y pan al contenedor completo
   const zoom = newZoom / 100;
-  elements.layersContainer.style.transform = `scale(${zoom})`;
+  elements.layersContainer.style.transform = `translate(${state.panOffset.x}px, ${state.panOffset.y}px) scale(${zoom})`;
 }
 
 function handleGlobalZoom(e) {
   state.globalZoom = parseFloat(e.target.value);
   elements.zoomValue.textContent = state.globalZoom + '%';
 
-  // Aplicar zoom al contenedor completo
+  // Aplicar zoom y pan al contenedor completo
   const zoom = state.globalZoom / 100;
-  elements.layersContainer.style.transform = `scale(${zoom})`;
+  elements.layersContainer.style.transform = `translate(${state.panOffset.x}px, ${state.panOffset.y}px) scale(${zoom})`;
 }
 
 function handleBrightnessControl(e) {
@@ -620,8 +658,10 @@ function clearPatient() {
     state.images = [];
     state.selectedLayerIndex = null;
     state.globalZoom = 100;
+    state.panOffset = { x: 0, y: 0 };
     elements.zoomControl.value = 100;
     elements.zoomValue.textContent = '100%';
+    elements.layersContainer.style.transform = 'translate(0px, 0px) scale(1)';
     updateImageCount();
     renderLayers();
     renderLayersList();
