@@ -52,6 +52,9 @@ function setupEventListeners() {
 
   // Teclado para alineación
   document.addEventListener('keydown', handleKeyboard);
+
+  // Zoom con rueda del ratón
+  elements.layersContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
 }
 
 // Manejo de carga de imágenes
@@ -128,8 +131,10 @@ function renderLayers() {
     if (imageData.referencePoint) {
       const refMarker = document.createElement('div');
       refMarker.className = 'reference-marker';
-      refMarker.style.left = `${imageData.referencePoint.x}%`;
-      refMarker.style.top = `${imageData.referencePoint.y}%`;
+      // El punto está en píxeles desde el centro de la imagen original
+      // Como el layerDiv ya tiene scale aplicado, el marcador se escalará automáticamente
+      refMarker.style.left = `calc(50% + ${imageData.referencePoint.x}px)`;
+      refMarker.style.top = `calc(50% + ${imageData.referencePoint.y}px)`;
       layerDiv.appendChild(refMarker);
     }
 
@@ -393,6 +398,19 @@ function stopDrag() {
 }
 
 // Controles globales
+function handleWheelZoom(e) {
+  e.preventDefault();
+
+  // Incremento de zoom (positivo = zoom in, negativo = zoom out)
+  const delta = e.deltaY > 0 ? -10 : 10;
+  const newZoom = Math.min(900, Math.max(50, state.globalZoom + delta));
+
+  state.globalZoom = newZoom;
+  elements.zoomControl.value = newZoom;
+  elements.zoomValue.textContent = newZoom + '%';
+  renderLayers();
+}
+
 function handleGlobalZoom(e) {
   state.globalZoom = parseFloat(e.target.value);
   elements.zoomValue.textContent = state.globalZoom + '%';
@@ -544,11 +562,26 @@ function setReferencePoint(e, index, layerDiv) {
   const img = layerDiv.querySelector('img');
   const rect = img.getBoundingClientRect();
 
-  // Calcular la posición del clic como porcentaje de la imagen (0-100)
-  const x = ((e.clientX - rect.left) / rect.width) * 100;
-  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  // Guardar la posición del clic como píxeles absolutos en el viewport
+  // Esto hace que sea independiente del zoom y más fácil de alinear
+  const screenX = e.clientX;
+  const screenY = e.clientY;
 
-  state.images[index].referencePoint = { x, y };
+  // Guardar también el zoom/escala actual para poder recalcular
+  const zoom = state.globalZoom / 100;
+  const layerScale = (imageData.scale || 100) / 100;
+  const totalScale = zoom * layerScale;
+
+  // Calcular posición relativa al centro de la imagen (en píxeles de imagen original)
+  const imgCenterX = rect.left + rect.width / 2;
+  const imgCenterY = rect.top + rect.height / 2;
+  const relX = (screenX - imgCenterX) / totalScale;
+  const relY = (screenY - imgCenterY) / totalScale;
+
+  state.images[index].referencePoint = {
+    x: relX,  // píxeles desde el centro de la imagen original
+    y: relY
+  };
 
   // Desactivar modo de marcado
   state.isMarkingReference = false;
@@ -573,51 +606,27 @@ function alignByReferences() {
   const baseLayer = layersWithRef[0];
   const baseIndex = state.images.indexOf(baseLayer);
 
-  // Necesitamos las dimensiones de las imágenes
-  const promises = state.images.map((imageData, index) => {
-    return new Promise((resolve) => {
-      if (!imageData.referencePoint) {
-        resolve(null);
-        return;
-      }
-      const img = new Image();
-      img.onload = () => {
-        resolve({ index, width: img.width, height: img.height });
-      };
-      img.src = imageData.src;
-    });
+  // Los puntos de referencia están en píxeles desde el centro de cada imagen original
+  // Para alinearlos, necesitamos que todos apunten a la misma posición en pantalla
+
+  // Posición absoluta del punto base teniendo en cuenta su escala
+  const baseScale = (baseLayer.scale || 100) / 100;
+  const baseAbsX = baseLayer.referencePoint.x * baseScale + baseLayer.offsetX;
+  const baseAbsY = baseLayer.referencePoint.y * baseScale + baseLayer.offsetY;
+
+  // Alinear todas las demás capas
+  state.images.forEach((imageData, index) => {
+    if (index !== baseIndex && imageData.referencePoint) {
+      const scale = (imageData.scale || 100) / 100;
+
+      // Calcular el offset necesario para que este punto coincida con el base
+      imageData.offsetX = baseAbsX - (imageData.referencePoint.x * scale);
+      imageData.offsetY = baseAbsY - (imageData.referencePoint.y * scale);
+    }
   });
 
-  Promise.all(promises).then((results) => {
-    const validResults = results.filter(r => r !== null);
-    const baseData = validResults.find(r => r.index === baseIndex);
-
-    // Calcular posición absoluta del punto de referencia base (en píxeles)
-    const baseScale = (baseLayer.scale || 100) / 100;
-    const baseRefPxX = (baseData.width * baseLayer.referencePoint.x / 100) * baseScale;
-    const baseRefPxY = (baseData.height * baseLayer.referencePoint.y / 100) * baseScale;
-    const baseAbsX = baseRefPxX + baseLayer.offsetX;
-    const baseAbsY = baseRefPxY + baseLayer.offsetY;
-
-    // Alinear todas las demás capas
-    validResults.forEach(({ index, width, height }) => {
-      if (index !== baseIndex) {
-        const imageData = state.images[index];
-        const scale = (imageData.scale || 100) / 100;
-
-        // Posición del punto de referencia en píxeles de la imagen escalada
-        const refPxX = (width * imageData.referencePoint.x / 100) * scale;
-        const refPxY = (height * imageData.referencePoint.y / 100) * scale;
-
-        // Calcular offset necesario
-        imageData.offsetX = baseAbsX - refPxX;
-        imageData.offsetY = baseAbsY - refPxY;
-      }
-    });
-
-    renderLayers();
-    alert(`Alineadas ${layersWithRef.length} capas por sus puntos de referencia`);
-  });
+  renderLayers();
+  alert(`Alineadas ${layersWithRef.length} capas por sus puntos de referencia`);
 }
 
 // Ajuste automático de iluminación basado en tono de piel
