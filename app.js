@@ -898,15 +898,18 @@ function alignByReferences() {
   const baseIndex = state.images.indexOf(baseLayer);
   const basePoints = baseLayer.referencePoints;
 
-  // Si la base tiene 2 puntos, calcular distancia base
+  // Si la base tiene 2 puntos, calcular distancia y ángulo base
   let baseDistance = null;
+  let baseAngle = null;
   if (basePoints.length === 2) {
     const dx = basePoints[1].x - basePoints[0].x;
     const dy = basePoints[1].y - basePoints[0].y;
     baseDistance = Math.sqrt(dx * dx + dy * dy);
+    baseAngle = Math.atan2(dy, dx) * (180 / Math.PI); // Convertir a grados
   }
 
   const baseScale = (baseLayer.scale || 100) / 100;
+  const baseRotation = baseLayer.rotation || 0;
   const basePoint1 = basePoints[0];
   const baseAbsX = basePoint1.x * baseScale + baseLayer.offsetX;
   const baseAbsY = basePoint1.y * baseScale + baseLayer.offsetY;
@@ -920,15 +923,19 @@ function alignByReferences() {
     const points = imageData.referencePoints;
     const point1 = points[0];
 
-    // Si ambas capas tienen 2 puntos, calcular y ajustar escala
-    if (baseDistance && points.length === 2) {
+    // Si ambas capas tienen 2 puntos, calcular y ajustar escala y rotación
+    if (baseDistance && baseAngle !== null && points.length === 2) {
       const dx = points[1].x - points[0].x;
       const dy = points[1].y - points[0].y;
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
+      const currentAngle = Math.atan2(dy, dx) * (180 / Math.PI);
 
       // Calcular la escala necesaria para que las distancias coincidan
       const scaleRatio = baseDistance / currentDistance;
       imageData.scale = Math.min(200, Math.max(50, scaleRatio * 100));
+
+      // Calcular la rotación necesaria para que los ángulos coincidan
+      imageData.rotation = baseAngle - currentAngle + baseRotation;
     }
 
     // Aplicar el nuevo scale para calcular la posición
@@ -942,16 +949,18 @@ function alignByReferences() {
   renderLayers();
   renderLayersList();
 
-  // Actualizar control de escala si hay capa seleccionada
+  // Actualizar controles si hay capa seleccionada
   if (state.selectedLayerIndex !== null) {
     const selected = state.images[state.selectedLayerIndex];
     elements.scaleControl.value = selected.scale;
     elements.scaleValue.textContent = Math.round(selected.scale) + '%';
+    elements.rotationControl.value = selected.rotation || 0;
+    elements.rotationValue.textContent = Math.round(selected.rotation || 0) + '°';
   }
 
   const withTwoPoints = layersWithRef.filter(l => l.referencePoints.length === 2).length;
   if (withTwoPoints > 1) {
-    alert(`Alineadas ${layersWithRef.length} capas (${withTwoPoints} con ajuste de escala)`);
+    alert(`Alineadas ${layersWithRef.length} capas (${withTwoPoints} con ajuste de escala y rotación)`);
   } else {
     alert(`Alineadas ${layersWithRef.length} capas por posición`);
   }
