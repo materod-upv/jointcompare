@@ -540,7 +540,11 @@ function setReferencePoint(e, index, layerDiv) {
   e.preventDefault();
   e.stopPropagation();
 
-  const rect = layerDiv.getBoundingClientRect();
+  const imageData = state.images[index];
+  const img = layerDiv.querySelector('img');
+  const rect = img.getBoundingClientRect();
+
+  // Calcular la posición del clic como porcentaje de la imagen (0-100)
   const x = ((e.clientX - rect.left) / rect.width) * 100;
   const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -569,26 +573,51 @@ function alignByReferences() {
   const baseLayer = layersWithRef[0];
   const baseIndex = state.images.indexOf(baseLayer);
 
-  // Calcular posición absoluta del punto de referencia base
-  const baseRefX = baseLayer.referencePoint.x;
-  const baseRefY = baseLayer.referencePoint.y;
-
-  // Alinear todas las demás capas con referencia
-  state.images.forEach((imageData, index) => {
-    if (index !== baseIndex && imageData.referencePoint) {
-      // Calcular el desplazamiento necesario para alinear los puntos
-      const deltaX = (baseRefX - imageData.referencePoint.x);
-      const deltaY = (baseRefY - imageData.referencePoint.y);
-
-      // Aplicar el desplazamiento (proporcional al tamaño de la imagen)
-      // Usamos un factor estimado basado en el tamaño típico de imagen
-      imageData.offsetX += deltaX * 6; // Factor ajustable
-      imageData.offsetY += deltaY * 6; // Factor ajustable
-    }
+  // Necesitamos las dimensiones de las imágenes
+  const promises = state.images.map((imageData, index) => {
+    return new Promise((resolve) => {
+      if (!imageData.referencePoint) {
+        resolve(null);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        resolve({ index, width: img.width, height: img.height });
+      };
+      img.src = imageData.src;
+    });
   });
 
-  renderLayers();
-  alert(`Alineadas ${layersWithRef.length} capas por sus puntos de referencia`);
+  Promise.all(promises).then((results) => {
+    const validResults = results.filter(r => r !== null);
+    const baseData = validResults.find(r => r.index === baseIndex);
+
+    // Calcular posición absoluta del punto de referencia base (en píxeles)
+    const baseScale = (baseLayer.scale || 100) / 100;
+    const baseRefPxX = (baseData.width * baseLayer.referencePoint.x / 100) * baseScale;
+    const baseRefPxY = (baseData.height * baseLayer.referencePoint.y / 100) * baseScale;
+    const baseAbsX = baseRefPxX + baseLayer.offsetX;
+    const baseAbsY = baseRefPxY + baseLayer.offsetY;
+
+    // Alinear todas las demás capas
+    validResults.forEach(({ index, width, height }) => {
+      if (index !== baseIndex) {
+        const imageData = state.images[index];
+        const scale = (imageData.scale || 100) / 100;
+
+        // Posición del punto de referencia en píxeles de la imagen escalada
+        const refPxX = (width * imageData.referencePoint.x / 100) * scale;
+        const refPxY = (height * imageData.referencePoint.y / 100) * scale;
+
+        // Calcular offset necesario
+        imageData.offsetX = baseAbsX - refPxX;
+        imageData.offsetY = baseAbsY - refPxY;
+      }
+    });
+
+    renderLayers();
+    alert(`Alineadas ${layersWithRef.length} capas por sus puntos de referencia`);
+  });
 }
 
 // Ajuste automático de iluminación basado en tono de piel
