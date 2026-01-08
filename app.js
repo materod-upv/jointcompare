@@ -523,6 +523,9 @@ function clearPatient() {
   if (confirm('¿Estás seguro de que quieres cerrar este paciente y comenzar con otro?')) {
     state.images = [];
     state.selectedLayerIndex = null;
+    state.globalZoom = 100;
+    elements.zoomControl.value = 100;
+    elements.zoomValue.textContent = '100%';
     updateImageCount();
     renderLayers();
     renderLayersList();
