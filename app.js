@@ -321,6 +321,7 @@ function updateLayerScale(index, value) {
 function toggleLayerVisibility(index, visible) {
   state.images[index].visible = visible;
   renderLayers();
+  renderLayersList();
 }
 
 // Toggle bloqueo de capa

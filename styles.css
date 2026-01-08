@@ -107,7 +107,10 @@ button {
     font-weight: 500;
     transition: all 0.15s;
 }
-
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
 button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -268,6 +271,11 @@ button:disabled {
     cursor: pointer;
 }
 
+.control-group input[type="range"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .control-group span {
     font-size: 11px;
     color: #333;
@@ -318,6 +326,11 @@ button:disabled {
 
 .btn-arrow:active {
     transform: scale(0.95);
+}
+
+.btn-arrow:disabled:hover {
+    background: #555;
+    transform: none;
 }
 
 .btn-arrow:disabled:hover {
