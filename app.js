@@ -82,7 +82,7 @@ function addImageLayer(src, name) {
     id: Date.now() + Math.random(),
     src: src,
     name: name,
-    opacity: 50,
+    opacity: 100,
     offsetX: 0,
     offsetY: 0,
     brightness: 100,
@@ -115,6 +115,11 @@ function renderLayers() {
     const img = document.createElement('img');
     img.src = imageData.src;
     img.style.opacity = imageData.opacity / 100;
+
+    // Marcar visualmente la capa seleccionada
+    if (index === state.selectedLayerIndex) {
+      img.classList.add('selected-layer');
+    }
 
     // Aplicar filtro de brillo de capa
     const layerBrightness = imageData.brightness || 100;
@@ -293,6 +298,7 @@ function selectLayer(index) {
   elements.scaleValue.textContent = Math.round(scale) + '%';
   elements.scaleControl.disabled = isLocked;
 
+  renderLayers();
   renderLayersList();
 }
 
@@ -357,14 +363,42 @@ function reorderLayers(fromIndex, toIndex) {
 // Eliminar capa
 function removeLayer(index) {
   state.images.splice(index, 1);
-  if (state.selectedLayerIndex === index) {
+
+  // Ajustar la selección
+  if (state.images.length === 0) {
+    // No quedan capas
     state.selectedLayerIndex = null;
+  } else if (state.selectedLayerIndex === index) {
+    // Se eliminó la capa seleccionada, seleccionar otra
+    if (index >= state.images.length) {
+      // Era la última, seleccionar la nueva última
+      state.selectedLayerIndex = state.images.length - 1;
+    } else {
+      // Seleccionar la que ahora está en la misma posición
+      state.selectedLayerIndex = index;
+    }
   } else if (state.selectedLayerIndex > index) {
+    // Ajustar índice si era posterior a la eliminada
     state.selectedLayerIndex--;
   }
+
   updateImageCount();
   renderLayers();
   renderLayersList();
+
+  // Actualizar controles con la nueva capa seleccionada
+  if (state.selectedLayerIndex !== null) {
+    const selectedImage = state.images[state.selectedLayerIndex];
+    const isLocked = selectedImage.locked;
+
+    elements.brightnessControl.value = selectedImage.brightness || 100;
+    elements.brightnessValue.textContent = Math.round(selectedImage.brightness || 100) + '%';
+    elements.brightnessControl.disabled = isLocked;
+
+    elements.scaleControl.value = selectedImage.scale || 100;
+    elements.scaleValue.textContent = Math.round(selectedImage.scale || 100) + '%';
+    elements.scaleControl.disabled = isLocked;
+  }
 }
 
 // Drag and drop para alineación
