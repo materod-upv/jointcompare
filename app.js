@@ -16,6 +16,8 @@ const elements = {
   layersContainer: document.getElementById('layersContainer'),
   zoomControl: document.getElementById('zoomControl'),
   zoomValue: document.getElementById('zoomValue'),
+  scaleControl: document.getElementById('scaleControl'),
+  scaleValue: document.getElementById('scaleValue'),
   resetPosition: document.getElementById('resetPosition'),
   arrowButtons: document.querySelectorAll('.btn-arrow'),
   autoAdjustBrightness: document.getElementById('autoAdjustBrightness')
@@ -32,6 +34,7 @@ function setupEventListeners() {
   elements.clearPatient.addEventListener('click', clearPatient);
 
   elements.zoomControl.addEventListener('input', handleGlobalZoom);
+  elements.scaleControl.addEventListener('input', handleScaleControl);
   elements.resetPosition.addEventListener('click', resetSelectedLayerPosition);
   elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
 
@@ -71,6 +74,7 @@ function addImageLayer(src, name) {
     offsetX: 0,
     offsetY: 0,
     brightness: 100,
+    scale: 100,
     visible: true
   };
 
@@ -102,9 +106,11 @@ function renderLayers() {
     const layerBrightness = imageData.brightness || 100;
     img.style.filter = `brightness(${layerBrightness}%)`;
 
-    // Aplicar zoom y posición
+    // Aplicar zoom global y escala individual
     const zoom = state.globalZoom / 100;
-    layerDiv.style.transform = `translate(calc(-50% + ${imageData.offsetX}px), calc(-50% + ${imageData.offsetY}px)) scale(${zoom})`;
+    const layerScale = (imageData.scale || 100) / 100;
+    const finalScale = zoom * layerScale;
+    layerDiv.style.transform = `translate(calc(-50% + ${imageData.offsetX}px), calc(-50% + ${imageData.offsetY}px)) scale(${finalScale})`;
 
     layerDiv.appendChild(img);
 
@@ -192,6 +198,10 @@ function renderLayersList() {
 // Seleccionar capa
 function selectLayer(index) {
   state.selectedLayerIndex = index;
+  // Actualizar control de escala con el valor de la capa seleccionada
+  const scale = state.images[index].scale || 100;
+  elements.scaleControl.value = scale;
+  elements.scaleValue.textContent = Math.round(scale) + '%';
   renderLayersList();
 }
 
@@ -204,6 +214,12 @@ function updateLayerOpacity(index, value) {
 // Actualizar brillo de capa
 function updateLayerBrightness(index, value) {
   state.images[index].brightness = parseFloat(value);
+  renderLayers();
+}
+
+// Actualizar escala de capa
+function updateLayerScale(index, value) {
+  state.images[index].scale = parseFloat(value);
   renderLayers();
 }
 
@@ -264,6 +280,20 @@ function stopDrag() {
 function handleGlobalZoom(e) {
   state.globalZoom = parseFloat(e.target.value);
   elements.zoomValue.textContent = state.globalZoom + '%';
+  renderLayers();
+}
+
+function handleScaleControl(e) {
+  if (state.selectedLayerIndex === null) {
+    alert('Selecciona una capa primero');
+    elements.scaleControl.value = 100;
+    elements.scaleValue.textContent = '100%';
+    return;
+  }
+
+  const scale = parseFloat(e.target.value);
+  state.images[state.selectedLayerIndex].scale = scale;
+  elements.scaleValue.textContent = Math.round(scale) + '%';
   renderLayers();
 }
 
