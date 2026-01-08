@@ -159,6 +159,11 @@ function renderLayers() {
 
     // Event listeners para drag
     layerDiv.addEventListener('mousedown', (e) => {
+      // Si se está presionando Shift, dar prioridad al pan
+      if (e.shiftKey) {
+        return;
+      }
+
       if (state.isMarkingReference) {
         // En modo de marcado de referencia, solo marcar puntos, no arrastrar
         if (index === state.selectedLayerIndex) {
@@ -469,8 +474,8 @@ function stopDrag() {
 
 // Panning de la vista (Shift + arrastrar)
 function handlePanStart(e) {
-  // Solo iniciar pan si se mantiene Shift y no hay otros arrastres activos
-  if (e.shiftKey && !state.isMarkingReference && !state.isDragging) {
+  // Shift siempre tiene prioridad para hacer pan
+  if (e.shiftKey && !state.isMarkingReference) {
     e.preventDefault();
     state.isPanning = true;
     state.dragStart = { x: e.clientX - state.panOffset.x, y: e.clientY - state.panOffset.y };
