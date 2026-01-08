@@ -16,6 +16,8 @@ const elements = {
   layersContainer: document.getElementById('layersContainer'),
   zoomControl: document.getElementById('zoomControl'),
   zoomValue: document.getElementById('zoomValue'),
+  brightnessControl: document.getElementById('brightnessControl'),
+  brightnessValue: document.getElementById('brightnessValue'),
   scaleControl: document.getElementById('scaleControl'),
   scaleValue: document.getElementById('scaleValue'),
   resetPosition: document.getElementById('resetPosition'),
@@ -34,6 +36,7 @@ function setupEventListeners() {
   elements.clearPatient.addEventListener('click', clearPatient);
 
   elements.zoomControl.addEventListener('input', handleGlobalZoom);
+  elements.brightnessControl.addEventListener('input', handleBrightnessControl);
   elements.scaleControl.addEventListener('input', handleScaleControl);
   elements.resetPosition.addEventListener('click', resetSelectedLayerPosition);
   elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
@@ -146,12 +149,6 @@ function renderLayersList() {
                     <span>${imageData.opacity}%</span>
                 </div>
                 <div class="layer-control-group">
-                    <label>Brillo</label>
-                    <input type="range" min="50" max="200" value="${imageData.brightness || 100}" 
-                           data-index="${index}" data-control="brightness">
-                    <span>${Math.round(imageData.brightness || 100)}%</span>
-                </div>
-                <div class="layer-control-group">
                     <label>
                         <input type="checkbox" ${imageData.visible ? 'checked' : ''} 
                                data-index="${index}" data-control="visibility">
@@ -180,12 +177,6 @@ function renderLayersList() {
       e.target.nextElementSibling.textContent = e.target.value + '%';
     });
 
-    const brightnessInput = layerItem.querySelector('[data-control="brightness"]');
-    brightnessInput.addEventListener('input', (e) => {
-      updateLayerBrightness(index, e.target.value);
-      e.target.nextElementSibling.textContent = Math.round(e.target.value) + '%';
-    });
-
     const visibilityCheckbox = layerItem.querySelector('[data-control="visibility"]');
     visibilityCheckbox.addEventListener('change', (e) => {
       toggleLayerVisibility(index, e.target.checked);
@@ -198,10 +189,15 @@ function renderLayersList() {
 // Seleccionar capa
 function selectLayer(index) {
   state.selectedLayerIndex = index;
-  // Actualizar control de escala con el valor de la capa seleccionada
+  // Actualizar controles con los valores de la capa seleccionada
+  const brightness = state.images[index].brightness || 100;
+  elements.brightnessControl.value = brightness;
+  elements.brightnessValue.textContent = Math.round(brightness) + '%';
+
   const scale = state.images[index].scale || 100;
   elements.scaleControl.value = scale;
   elements.scaleValue.textContent = Math.round(scale) + '%';
+
   renderLayersList();
 }
 
@@ -280,6 +276,20 @@ function stopDrag() {
 function handleGlobalZoom(e) {
   state.globalZoom = parseFloat(e.target.value);
   elements.zoomValue.textContent = state.globalZoom + '%';
+  renderLayers();
+}
+
+function handleBrightnessControl(e) {
+  if (state.selectedLayerIndex === null) {
+    alert('Selecciona una capa primero');
+    elements.brightnessControl.value = 100;
+    elements.brightnessValue.textContent = '100%';
+    return;
+  }
+
+  const brightness = parseFloat(e.target.value);
+  state.images[state.selectedLayerIndex].brightness = brightness;
+  elements.brightnessValue.textContent = Math.round(brightness) + '%';
   renderLayers();
 }
 
