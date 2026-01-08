@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JointCompare - Comparador de Evolución Fisioterapéutica</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JointCompare</h1>
+            <p>Comparación visual de progreso de pacientes</p>
+        </header>
+
+        <div class="controls-panel">
+            <div class="control-section">
+                <h3>Cargar Fotos</h3>
+                <input type="file" id="imageInput" accept="image/*" multiple>
+                <button id="clearPatient" class="btn-danger">Nuevo Paciente</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Capas Activas (<span id="imageCount">0</span>)</h3>
+                <div id="layersList" class="layers-list"></div>
+            </div>
+
+            <div class="control-section">
+                <h3>Controles de Visualización</h3>
+                
+                <div class="control-group">
+                    <label for="zoomControl">Zoom</label>
+                    <input type="range" id="zoomControl" min="50" max="300" value="100" step="1">
+                    <span id="zoomValue">100%</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="brightnessControl">Brillo</label>
+                    <input type="range" id="brightnessControl" min="50" max="150" value="100" step="1">
+                    <span id="brightnessValue">100%</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="contrastControl">Contraste</label>
+                    <input type="range" id="contrastControl" min="50" max="150" value="100" step="1">
+                    <span id="contrastValue">100%</span>
+                </div>
+
+                <button id="resetControls" class="btn-secondary">Resetear Controles</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Alineación</h3>
+                <div class="alignment-instructions">
+                    Selecciona una capa y usa las teclas de dirección o haz clic y arrastra para alinear
+                </div>
+                <div class="alignment-controls">
+                    <button class="btn-arrow" data-direction="up">▲</button>
+                    <div class="arrow-row">
+                        <button class="btn-arrow" data-direction="left">◄</button>
+                        <button id="resetPosition" class="btn-secondary">Centro</button>
+                        <button class="btn-arrow" data-direction="right">►</button>
+                    </div>
+                    <button class="btn-arrow" data-direction="down">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="viewer-container">
+            <div id="canvasContainer" class="canvas-container">
+                <div id="layersContainer" class="layers-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
