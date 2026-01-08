@@ -693,10 +693,20 @@ function handleRotationControl(e) {
 
 // Alineación con teclado/botones
 function handleKeyboard(e) {
+  const key = e.key.toLowerCase();
+
+  // Toggle mostrar puntos de referencia con tecla 'R'
+  if (key === 'r') {
+    e.preventDefault();
+    state.showReferencePoints = !state.showReferencePoints;
+    elements.showReferencePointsCheckbox.checked = state.showReferencePoints;
+    renderLayers();
+    return;
+  }
+
   if (state.selectedLayerIndex === null) return;
 
-  const key = e.key;
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
     e.preventDefault();
 
     const direction = {
@@ -704,7 +714,7 @@ function handleKeyboard(e) {
       'ArrowDown': 'down',
       'ArrowLeft': 'left',
       'ArrowRight': 'right'
-    }[key];
+    }[e.key];
 
     handleArrowKey(direction);
   }
