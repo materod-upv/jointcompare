@@ -67,6 +67,25 @@ function setupEventListeners() {
 
   // Panning con Shift + arrastrar
   elements.layersContainer.addEventListener('mousedown', handlePanStart);
+
+  // Cambiar cursor cuando se presiona/suelta Shift
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Shift' && !state.isPanning && !state.isMarkingReference) {
+      elements.layersContainer.style.cursor = 'grab';
+      document.querySelectorAll('.image-layer').forEach(layer => {
+        layer.style.cursor = 'grab';
+      });
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'Shift' && !state.isPanning) {
+      elements.layersContainer.style.cursor = '';
+      document.querySelectorAll('.image-layer').forEach(layer => {
+        layer.style.cursor = '';
+      });
+    }
+  });
 }
 
 // Manejo de carga de imágenes
@@ -484,6 +503,10 @@ function handlePanStart(e) {
     document.addEventListener('mouseup', stopPan);
 
     elements.layersContainer.style.cursor = 'grabbing';
+    // Aplicar cursor también a las capas individuales
+    document.querySelectorAll('.image-layer').forEach(layer => {
+      layer.style.cursor = 'grabbing';
+    });
   }
 }
 
@@ -503,6 +526,10 @@ function stopPan() {
   document.removeEventListener('mousemove', handlePanDrag);
   document.removeEventListener('mouseup', stopPan);
   elements.layersContainer.style.cursor = '';
+  // Restaurar cursor de las capas
+  document.querySelectorAll('.image-layer').forEach(layer => {
+    layer.style.cursor = '';
+  });
 }
 
 // Controles globales
