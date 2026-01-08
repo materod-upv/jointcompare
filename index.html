@@ -28,12 +28,6 @@
             <div class="control-section">
                 <h3>Controles de Visualización</h3>
                 
-                <div class="control-group">
-                    <label for="zoomControl">Zoom</label>
-                    <input type="range" id="zoomControl" min="50" max="900" value="100" step="1">
-                    <span id="zoomValue">100%</span>
-                </div>
-
                 <button id="autoAdjustBrightness" class="btn-secondary">Igualar Tonos</button>
             </div>
 
@@ -85,6 +79,13 @@
         <div class="viewer-container">
             <div id="canvasContainer" class="canvas-container">
                 <div id="layersContainer" class="layers-container"></div>
+            </div>
+            
+            <!-- Panel flotante de zoom -->
+            <div class="zoom-panel-floating">
+                <label>Zoom</label>
+                <input type="range" id="zoomControl" min="50" max="900" value="100" step="10">
+                <span id="zoomValue">100%</span>
             </div>
         </div>
     </div>
