@@ -704,9 +704,46 @@ function handleKeyboard(e) {
     return;
   }
 
+  // Alinear por referencias con tecla 'A'
+  if (key === 'a') {
+    e.preventDefault();
+    alignByReferences();
+    return;
+  }
+
+  // Marcar puntos de referencia con tecla 'M'
+  if (key === 'm') {
+    e.preventDefault();
+    toggleMarkReferenceMode();
+    return;
+  }
+
+  // Igualar tonos con tecla 'T'
+  if (key === 't') {
+    e.preventDefault();
+    autoAdjustBrightness();
+    return;
+  }
+
   if (state.selectedLayerIndex === null) return;
 
   const index = state.selectedLayerIndex;
+
+  // Toggle visibilidad de capa con tecla 'V'
+  if (key === 'v') {
+    e.preventDefault();
+    const newVisibleState = !state.images[index].visible;
+    toggleLayerVisibility(index, newVisibleState);
+    return;
+  }
+
+  // Toggle bloqueo de capa con tecla 'B'
+  if (key === 'b') {
+    e.preventDefault();
+    const newLockedState = !state.images[index].locked;
+    toggleLayerLocked(index, newLockedState);
+    return;
+  }
 
   // Verificar si la capa está bloqueada para operaciones de transformación
   if (state.images[index].locked && (key === '+' || key === '-' || key === ',' || key === '.')) {
