@@ -154,6 +154,19 @@ button {
     border-color: #2196f3;
 }
 
+.layer-item.locked {
+    background: #f0f0f0;
+}
+
+.layer-item.hidden {
+    opacity: 0.5;
+}
+
+.layer-item.locked .layer-name::after {
+    content: " 🔒";
+    font-size: 10px;
+}
+
 .layer-item .layer-header {
     display: flex;
     justify-content: space-between;

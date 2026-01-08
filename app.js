@@ -78,6 +78,7 @@ function addImageLayer(src, name) {
     offsetY: 0,
     brightness: 100,
     scale: 100,
+    locked: false,
     visible: true
   };
 
@@ -135,6 +136,12 @@ function renderLayersList() {
     if (index === state.selectedLayerIndex) {
       layerItem.classList.add('selected');
     }
+    if (imageData.locked) {
+      layerItem.classList.add('locked');
+    }
+    if (!imageData.visible) {
+      layerItem.classList.add('hidden');
+    }
 
     layerItem.innerHTML = `
             <div class="layer-header">
@@ -153,6 +160,11 @@ function renderLayersList() {
                         <input type="checkbox" ${imageData.visible ? 'checked' : ''} 
                                data-index="${index}" data-control="visibility">
                         Visible
+                    </label>
+                    <label style="margin-left: 10px;">
+                        <input type="checkbox" ${imageData.locked ? 'checked' : ''} 
+                               data-index="${index}" data-control="locked">
+                        Bloqueada
                     </label>
                 </div>
             </div>
@@ -182,6 +194,11 @@ function renderLayersList() {
       toggleLayerVisibility(index, e.target.checked);
     });
 
+    const lockedCheckbox = layerItem.querySelector('[data-control="locked"]');
+    lockedCheckbox.addEventListener('change', (e) => {
+      toggleLayerLocked(index, e.target.checked);
+    });
+
     elements.layersList.appendChild(layerItem);
   });
 }
@@ -189,32 +206,39 @@ function renderLayersList() {
 // Seleccionar capa
 function selectLayer(index) {
   state.selectedLayerIndex = index;
+  const isLocked = state.images[index].locked;
+
   // Actualizar controles con los valores de la capa seleccionada
   const brightness = state.images[index].brightness || 100;
   elements.brightnessControl.value = brightness;
   elements.brightnessValue.textContent = Math.round(brightness) + '%';
+  elements.brightnessControl.disabled = isLocked;
 
   const scale = state.images[index].scale || 100;
   elements.scaleControl.value = scale;
   elements.scaleValue.textContent = Math.round(scale) + '%';
+  elements.scaleControl.disabled = isLocked;
 
   renderLayersList();
 }
 
 // Actualizar opacidad de capa
 function updateLayerOpacity(index, value) {
+  // Permitir cambiar opacidad incluso si está bloqueada
   state.images[index].opacity = parseFloat(value);
   renderLayers();
 }
 
 // Actualizar brillo de capa
 function updateLayerBrightness(index, value) {
+  if (state.images[index].locked) return;
   state.images[index].brightness = parseFloat(value);
   renderLayers();
 }
 
 // Actualizar escala de capa
 function updateLayerScale(index, value) {
+  if (state.images[index].locked) return;
   state.images[index].scale = parseFloat(value);
   renderLayers();
 }
@@ -223,6 +247,17 @@ function updateLayerScale(index, value) {
 function toggleLayerVisibility(index, visible) {
   state.images[index].visible = visible;
   renderLayers();
+}
+
+// Toggle bloqueo de capa
+function toggleLayerLocked(index, locked) {
+  state.images[index].locked = locked;
+  // Si es la capa seleccionada, actualizar controles
+  if (index === state.selectedLayerIndex) {
+    elements.brightnessControl.disabled = locked;
+    elements.scaleControl.disabled = locked;
+  }
+  renderLayersList();
 }
 
 // Eliminar capa
@@ -241,6 +276,7 @@ function removeLayer(index) {
 // Drag and drop para alineación
 function startDrag(e, index) {
   if (e.button !== 0) return; // Solo botón izquierdo
+  if (state.images[index].locked) return; // No arrastrar capas bloqueadas
 
   state.isDragging = true;
   state.selectedLayerIndex = index;
@@ -332,8 +368,14 @@ function handleArrowKey(direction) {
     return;
   }
 
-  const step = 5; // píxeles por movimiento
   const index = state.selectedLayerIndex;
+
+  if (state.images[index].locked) {
+    alert('Esta capa está bloqueada');
+    return;
+  }
+
+  const step = 5; // píxeles por movimiento
 
   switch (direction) {
     case 'up':
@@ -356,6 +398,11 @@ function handleArrowKey(direction) {
 function resetSelectedLayerPosition() {
   if (state.selectedLayerIndex === null) {
     alert('Selecciona una capa primero');
+    return;
+  }
+
+  if (state.images[state.selectedLayerIndex].locked) {
+    alert('Esta capa está bloqueada');
     return;
   }
 
