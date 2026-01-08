@@ -197,8 +197,9 @@ function renderLayers() {
 
     // Event listeners para drag
     layerDiv.addEventListener('mousedown', (e) => {
-      // Si se está presionando Shift, dar prioridad al pan
-      if (e.shiftKey) {
+      // Si Shift está presionado, mover la capa
+      if (e.shiftKey && !state.isMarkingReference) {
+        startDrag(e, index);
         return;
       }
 
@@ -207,9 +208,8 @@ function renderLayers() {
         if (index === state.selectedLayerIndex) {
           setReferencePoint(e, index, layerDiv);
         }
-      } else {
-        startDrag(e, index);
       }
+      // Sin Shift, el pan se maneja en handlePanStart
     });
     layerDiv.addEventListener('click', () => selectLayer(index));
 
@@ -522,10 +522,10 @@ function stopDrag() {
   document.removeEventListener('mouseup', stopDrag);
 }
 
-// Panning de la vista (Shift + arrastrar)
+// Panning de la vista (arrastrar sin Shift)
 function handlePanStart(e) {
-  // Shift siempre tiene prioridad para hacer pan
-  if (e.shiftKey && !state.isMarkingReference) {
+  // Pan solo cuando NO se presiona Shift
+  if (!e.shiftKey && !state.isMarkingReference) {
     e.preventDefault();
     state.isPanning = true;
     state.dragStart = { x: e.clientX - state.panOffset.x, y: e.clientY - state.panOffset.y };

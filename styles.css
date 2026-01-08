@@ -633,7 +633,7 @@ button:disabled {
 .help-tooltip strong {
     color: #3498db;
     display: block;
-    margin-bottom: 4px;
+    margin-top: 4px;
 }
 
 .help-tooltip kbd {
