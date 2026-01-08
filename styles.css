@@ -351,6 +351,44 @@ button {
     pointer-events: none;
 }
 
+/* Marcador de punto de referencia */
+.reference-marker {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 0, 0, 0.7);
+    border: 3px solid white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.reference-marker::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 30px;
+    background: white;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.reference-marker::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 2px;
+    background: white;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
 /* Scrollbar personalizado */
 ::-webkit-scrollbar {
     width: 6px;

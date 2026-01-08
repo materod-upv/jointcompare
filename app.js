@@ -4,7 +4,8 @@ const state = {
   selectedLayerIndex: null,
   globalZoom: 100,
   isDragging: false,
-  dragStart: { x: 0, y: 0 }
+  dragStart: { x: 0, y: 0 },
+  isMarkingReference: false
 };
 
 // Referencias a elementos del DOM
@@ -22,7 +23,9 @@ const elements = {
   scaleValue: document.getElementById('scaleValue'),
   resetPosition: document.getElementById('resetPosition'),
   arrowButtons: document.querySelectorAll('.btn-arrow'),
-  autoAdjustBrightness: document.getElementById('autoAdjustBrightness')
+  autoAdjustBrightness: document.getElementById('autoAdjustBrightness'),
+  markReferenceBtn: document.getElementById('markReferenceBtn'),
+  alignByReferenceBtn: document.getElementById('alignByReferenceBtn')
 };
 
 // Inicialización
@@ -40,6 +43,8 @@ function setupEventListeners() {
   elements.scaleControl.addEventListener('input', handleScaleControl);
   elements.resetPosition.addEventListener('click', resetSelectedLayerPosition);
   elements.autoAdjustBrightness.addEventListener('click', autoAdjustBrightness);
+  elements.markReferenceBtn.addEventListener('click', toggleMarkReferenceMode);
+  elements.alignByReferenceBtn.addEventListener('click', alignByReferences);
 
   elements.arrowButtons.forEach(btn => {
     btn.addEventListener('click', () => handleArrowKey(btn.dataset.direction));
@@ -79,7 +84,8 @@ function addImageLayer(src, name) {
     brightness: 100,
     scale: 100,
     locked: false,
-    visible: true
+    visible: true,
+    referencePoint: null
   };
 
   state.images.push(imageData);
@@ -118,8 +124,23 @@ function renderLayers() {
 
     layerDiv.appendChild(img);
 
+    // Mostrar punto de referencia si existe
+    if (imageData.referencePoint) {
+      const refMarker = document.createElement('div');
+      refMarker.className = 'reference-marker';
+      refMarker.style.left = `${imageData.referencePoint.x}%`;
+      refMarker.style.top = `${imageData.referencePoint.y}%`;
+      layerDiv.appendChild(refMarker);
+    }
+
     // Event listeners para drag
-    layerDiv.addEventListener('mousedown', (e) => startDrag(e, index));
+    layerDiv.addEventListener('mousedown', (e) => {
+      if (state.isMarkingReference && index === state.selectedLayerIndex) {
+        setReferencePoint(e, index, layerDiv);
+      } else {
+        startDrag(e, index);
+      }
+    });
     layerDiv.addEventListener('click', () => selectLayer(index));
 
     elements.layersContainer.appendChild(layerDiv);
@@ -209,10 +230,10 @@ function renderLayersList() {
     layerItem.addEventListener('drop', (e) => {
       e.preventDefault();
       layerItem.classList.remove('drag-over');
-      
+
       const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
       const toIndex = index;
-      
+
       if (fromIndex !== toIndex) {
         reorderLayers(fromIndex, toIndex);
       }
@@ -306,7 +327,7 @@ function reorderLayers(fromIndex, toIndex) {
   // Mover elemento en el array
   const [movedItem] = state.images.splice(fromIndex, 1);
   state.images.splice(toIndex, 0, movedItem);
-  
+
   // Actualizar selectedLayerIndex si es necesario
   if (state.selectedLayerIndex === fromIndex) {
     state.selectedLayerIndex = toIndex;
@@ -315,7 +336,7 @@ function reorderLayers(fromIndex, toIndex) {
   } else if (fromIndex > state.selectedLayerIndex && toIndex <= state.selectedLayerIndex) {
     state.selectedLayerIndex++;
   }
-  
+
   renderLayers();
   renderLayersList();
 }
@@ -488,6 +509,83 @@ function clearPatient() {
 // Actualizar contador de imágenes
 function updateImageCount() {
   elements.imageCount.textContent = state.images.length;
+}
+
+// Toggle modo de marcado de referencia
+function toggleMarkReferenceMode() {
+  if (state.selectedLayerIndex === null) {
+    alert('Selecciona una capa primero');
+    return;
+  }
+
+  state.isMarkingReference = !state.isMarkingReference;
+
+  if (state.isMarkingReference) {
+    elements.markReferenceBtn.textContent = 'Cancelar Marcado';
+    elements.markReferenceBtn.style.background = '#e74c3c';
+    elements.layersContainer.style.cursor = 'crosshair';
+    alert('Haz clic en la imagen para marcar el punto de referencia');
+  } else {
+    elements.markReferenceBtn.textContent = 'Marcar Punto de Referencia';
+    elements.markReferenceBtn.style.background = '';
+    elements.layersContainer.style.cursor = '';
+  }
+}
+
+// Establecer punto de referencia en una capa
+function setReferencePoint(e, index, layerDiv) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const rect = layerDiv.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+  state.images[index].referencePoint = { x, y };
+
+  // Desactivar modo de marcado
+  state.isMarkingReference = false;
+  elements.markReferenceBtn.textContent = 'Marcar Punto de Referencia';
+  elements.markReferenceBtn.style.background = '';
+  elements.layersContainer.style.cursor = '';
+
+  renderLayers();
+  renderLayersList();
+}
+
+// Alinear todas las capas por sus puntos de referencia
+function alignByReferences() {
+  const layersWithRef = state.images.filter(img => img.referencePoint !== null);
+
+  if (layersWithRef.length < 2) {
+    alert('Necesitas marcar puntos de referencia en al menos 2 capas');
+    return;
+  }
+
+  // Usar la primera capa con referencia como base
+  const baseLayer = layersWithRef[0];
+  const baseIndex = state.images.indexOf(baseLayer);
+
+  // Calcular posición absoluta del punto de referencia base
+  const baseRefX = baseLayer.referencePoint.x;
+  const baseRefY = baseLayer.referencePoint.y;
+
+  // Alinear todas las demás capas con referencia
+  state.images.forEach((imageData, index) => {
+    if (index !== baseIndex && imageData.referencePoint) {
+      // Calcular el desplazamiento necesario para alinear los puntos
+      const deltaX = (baseRefX - imageData.referencePoint.x);
+      const deltaY = (baseRefY - imageData.referencePoint.y);
+
+      // Aplicar el desplazamiento (proporcional al tamaño de la imagen)
+      // Usamos un factor estimado basado en el tamaño típico de imagen
+      imageData.offsetX += deltaX * 6; // Factor ajustable
+      imageData.offsetY += deltaY * 6; // Factor ajustable
+    }
+  });
+
+  renderLayers();
+  alert(`Alineadas ${layersWithRef.length} capas por sus puntos de referencia`);
 }
 
 // Ajuste automático de iluminación basado en tono de piel

@@ -17,7 +17,7 @@
             <div class="control-section">
                 <h3>Cargar Fotos</h3>
                 <input type="file" id="imageInput" accept="image/*" multiple>
-                <button id="clearPatient" class="btn-danger">Nuevo Paciente</button>
+                <button id="clearPatient" class="btn-danger">Limpiar Todo</button>
             </div>
 
             <div class="control-section layers-section">
@@ -43,7 +43,10 @@
                     Selecciona una capa y usa las teclas de dirección o haz clic y arrastra para alinear
                 </div>
                 
-                <div class="control-group">
+                <button id="markReferenceBtn" class="btn-secondary">Marcar Punto de Referencia</button>
+                <button id="alignByReferenceBtn" class="btn-secondary" style="margin-top: 6px;">Alinear por Referencias</button>
+                
+                <div class="control-group" style="margin-top: 10px;">
                     <label for="brightnessControl">Brillo</label>
                     <input type="range" id="brightnessControl" min="50" max="200" value="100" step="1">
                     <span id="brightnessValue">100%</span>
