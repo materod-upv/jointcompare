@@ -706,6 +706,61 @@ function handleKeyboard(e) {
 
   if (state.selectedLayerIndex === null) return;
 
+  const index = state.selectedLayerIndex;
+
+  // Verificar si la capa está bloqueada para operaciones de transformación
+  if (state.images[index].locked && (key === '+' || key === '-' || key === ',' || key === '.')) {
+    alert('Esta capa está bloqueada');
+    return;
+  }
+
+  // Escalar con + y -
+  if (key === '+' || key === '=') {
+    e.preventDefault();
+    const currentScale = state.images[index].scale || 100;
+    const newScale = Math.min(200, currentScale + 5);
+    state.images[index].scale = newScale;
+    elements.scaleControl.value = newScale;
+    elements.scaleValue.textContent = Math.round(newScale) + '%';
+    renderLayers();
+    return;
+  }
+
+  if (key === '-' || key === '_') {
+    e.preventDefault();
+    const currentScale = state.images[index].scale || 100;
+    const newScale = Math.max(50, currentScale - 5);
+    state.images[index].scale = newScale;
+    elements.scaleControl.value = newScale;
+    elements.scaleValue.textContent = Math.round(newScale) + '%';
+    renderLayers();
+    return;
+  }
+
+  // Rotar con , y .
+  if (key === ',') {
+    e.preventDefault();
+    const currentRotation = state.images[index].rotation || 0;
+    const newRotation = Math.max(-180, currentRotation - 5);
+    state.images[index].rotation = newRotation;
+    elements.rotationControl.value = newRotation;
+    elements.rotationValue.textContent = Math.round(newRotation) + '°';
+    renderLayers();
+    return;
+  }
+
+  if (key === '.') {
+    e.preventDefault();
+    const currentRotation = state.images[index].rotation || 0;
+    const newRotation = Math.min(180, currentRotation + 5);
+    state.images[index].rotation = newRotation;
+    elements.rotationControl.value = newRotation;
+    elements.rotationValue.textContent = Math.round(newRotation) + '°';
+    renderLayers();
+    return;
+  }
+
+  // Mover con flechas
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
     e.preventDefault();
 
