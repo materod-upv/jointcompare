@@ -108,6 +108,11 @@ button {
     transition: all 0.15s;
 }
 
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .btn-danger {
     background: #e74c3c;
     color: white;
@@ -118,6 +123,10 @@ button {
     background: #c0392b;
 }
 
+.btn-danger:disabled:hover {
+    background: #e74c3c;
+}
+
 .btn-secondary {
     background: #3498db;
     color: white;
@@ -126,6 +135,10 @@ button {
 
 .btn-secondary:hover {
     background: #2980b9;
+}
+
+.btn-secondary:disabled:hover {
+    background: #3498db;
 }
 
 /* Lista de capas */
@@ -305,6 +318,10 @@ button {
 
 .btn-arrow:active {
     transform: scale(0.95);
+}
+
+.btn-arrow:disabled:hover {
+    background: #555;
 }
 
 /* Área de visualización */

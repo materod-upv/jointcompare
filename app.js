@@ -31,6 +31,7 @@ const elements = {
 // Inicialización
 function init() {
   setupEventListeners();
+  updateControlsState();
 }
 
 // Configurar event listeners
@@ -536,6 +537,28 @@ function clearPatient() {
 // Actualizar contador de imágenes
 function updateImageCount() {
   elements.imageCount.textContent = state.images.length;
+  updateControlsState();
+}
+
+// Habilitar/deshabilitar controles según si hay capas
+function updateControlsState() {
+  const hasImages = state.images.length > 0;
+
+  // Controles de visualización
+  elements.zoomControl.disabled = !hasImages;
+  elements.autoAdjustBrightness.disabled = !hasImages;
+
+  // Controles de alineación
+  elements.markReferenceBtn.disabled = !hasImages;
+  elements.alignByReferenceBtn.disabled = !hasImages;
+  elements.brightnessControl.disabled = !hasImages;
+  elements.scaleControl.disabled = !hasImages;
+  elements.resetPosition.disabled = !hasImages;
+
+  // Botones de flechas
+  elements.arrowButtons.forEach(btn => {
+    btn.disabled = !hasImages;
+  });
 }
 
 // Toggle modo de marcado de referencia
