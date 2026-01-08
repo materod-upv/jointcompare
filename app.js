@@ -758,28 +758,37 @@ function autoAdjustBrightness() {
     return;
   }
 
-  // Analizar el brillo promedio de cada imagen
-  const brightnessPromises = state.images.map((imageData, index) => {
+  // Analizar las propiedades de cada imagen
+  const analysisPromises = state.images.map((imageData, index) => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        const brightness = analyzeImageBrightness(img);
-        resolve({ index, brightness });
+        const analysis = analyzeImageProperties(img);
+        resolve({ index, ...analysis });
       };
       img.src = imageData.src;
     });
   });
 
-  Promise.all(brightnessPromises).then(results => {
-    // Calcular brillo promedio de todas las imágenes
+  Promise.all(analysisPromises).then(results => {
+    // Calcular promedios de todas las imágenes
     const avgBrightness = results.reduce((sum, r) => sum + r.brightness, 0) / results.length;
+    const avgContrast = results.reduce((sum, r) => sum + r.contrast, 0) / results.length;
+    const avgSaturation = results.reduce((sum, r) => sum + r.saturation, 0) / results.length;
 
-    // Ajustar cada imagen para que coincida con el promedio
-    results.forEach(({ index, brightness }) => {
-      // Calcular factor de ajuste (cuánto más claro/oscuro está vs el promedio)
-      const adjustmentFactor = avgBrightness / brightness;
-      // Convertir a porcentaje (100 = sin cambio)
-      state.images[index].brightness = Math.min(200, Math.max(50, adjustmentFactor * 100));
+    // Ajustar cada imagen para que coincida con los promedios
+    results.forEach(({ index, brightness, contrast, saturation }) => {
+      // Ajustar brillo
+      const brightnessAdjust = avgBrightness / brightness;
+      state.images[index].brightness = Math.min(200, Math.max(50, brightnessAdjust * 100));
+
+      // Ajustar contraste
+      const contrastAdjust = avgContrast / contrast;
+      state.images[index].contrast = Math.min(200, Math.max(50, contrastAdjust * 100));
+
+      // Ajustar saturación
+      const saturationAdjust = avgSaturation / saturation;
+      state.images[index].saturation = Math.min(200, Math.max(0, saturationAdjust * 100));
     });
 
     renderLayers();
@@ -787,17 +796,21 @@ function autoAdjustBrightness() {
 
     // Actualizar controles si hay una capa seleccionada
     if (state.selectedLayerIndex !== null) {
-      const selectedBrightness = state.images[state.selectedLayerIndex].brightness || 100;
-      elements.brightnessControl.value = selectedBrightness;
-      elements.brightnessValue.textContent = Math.round(selectedBrightness) + '%';
+      const selected = state.images[state.selectedLayerIndex];
+      elements.brightnessControl.value = selected.brightness;
+      elements.brightnessValue.textContent = Math.round(selected.brightness) + '%';
+      elements.contrastControl.value = selected.contrast;
+      elements.contrastValue.textContent = Math.round(selected.contrast) + '%';
+      elements.saturationControl.value = selected.saturation;
+      elements.saturationValue.textContent = Math.round(selected.saturation) + '%';
     }
 
-    alert('Iluminación ajustada automáticamente para igualar tonos');
+    alert('Tonos ajustados automáticamente (brillo, contraste y saturación)');
   });
 }
 
-// Analizar brillo promedio de una imagen
-function analyzeImageBrightness(img) {
+// Analizar propiedades de una imagen
+function analyzeImageProperties(img) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
@@ -813,6 +826,9 @@ function analyzeImageBrightness(img) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     let totalBrightness = 0;
+    let totalSaturation = 0;
+    let minBrightness = 255;
+    let maxBrightness = 0;
     let pixelCount = 0;
 
     // Muestrear cada 4 píxeles para mayor velocidad
@@ -824,13 +840,31 @@ function analyzeImageBrightness(img) {
       // Calcular luminancia percibida
       const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
       totalBrightness += brightness;
+      minBrightness = Math.min(minBrightness, brightness);
+      maxBrightness = Math.max(maxBrightness, brightness);
+
+      // Calcular saturación aproximada
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const saturation = max === 0 ? 0 : (max - min) / max;
+      totalSaturation += saturation;
+
       pixelCount++;
     }
 
-    return totalBrightness / pixelCount;
+    const avgBrightness = totalBrightness / pixelCount;
+    const avgSaturation = totalSaturation / pixelCount;
+    // Contraste como el rango entre valores más claros y oscuros
+    const contrast = maxBrightness - minBrightness;
+
+    return {
+      brightness: avgBrightness,
+      contrast: contrast,
+      saturation: avgSaturation * 255 // Normalizar a 0-255
+    };
   } catch (e) {
     console.error('Error analizando imagen:', e);
-    return 128; // Valor medio por defecto
+    return { brightness: 128, contrast: 128, saturation: 128 };
   }
 }
 
