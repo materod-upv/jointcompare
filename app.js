@@ -818,6 +818,37 @@ function handleKeyboard(e) {
     return;
   }
 
+  // Opacidad con z y x
+  if (key === 'z') {
+    e.preventDefault();
+    const currentOpacity = state.images[index].opacity || 100;
+    const newOpacity = Math.max(0, currentOpacity - 5);
+    state.images[index].opacity = newOpacity;
+    updateLayerOpacity(index, newOpacity);
+    // Actualizar el slider del panel de capas si existe
+    const opacityInput = document.querySelector(`[data-index="${index}"][data-control="opacity"]`);
+    if (opacityInput) {
+      opacityInput.value = newOpacity;
+      opacityInput.nextElementSibling.textContent = newOpacity + '%';
+    }
+    return;
+  }
+
+  if (key === 'x') {
+    e.preventDefault();
+    const currentOpacity = state.images[index].opacity || 100;
+    const newOpacity = Math.min(100, currentOpacity + 5);
+    state.images[index].opacity = newOpacity;
+    updateLayerOpacity(index, newOpacity);
+    // Actualizar el slider del panel de capas si existe
+    const opacityInput = document.querySelector(`[data-index="${index}"][data-control="opacity"]`);
+    if (opacityInput) {
+      opacityInput.value = newOpacity;
+      opacityInput.nextElementSibling.textContent = newOpacity + '%';
+    }
+    return;
+  }
+
   // Mover con flechas
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
     e.preventDefault();
