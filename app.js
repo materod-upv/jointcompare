@@ -695,6 +695,20 @@ function handleRotationControl(e) {
 function handleKeyboard(e) {
   const key = e.key.toLowerCase();
 
+  // Abrir archivos con O
+  if (key === 'o') {
+    e.preventDefault();
+    elements.imageInput.click();
+    return;
+  }
+
+  // Nuevo paciente con Ctrl+N
+  if (key === 'n') {
+    e.preventDefault();
+    clearPatient();
+    return;
+  }
+
   // Toggle mostrar puntos de referencia con tecla 'R'
   if (key === 'r') {
     e.preventDefault();
@@ -749,6 +763,13 @@ function handleKeyboard(e) {
   if (state.selectedLayerIndex === null) return;
 
   const index = state.selectedLayerIndex;
+
+  // Eliminar capa con Delete/Supr
+  if (e.key === 'Delete') {
+    e.preventDefault();
+    removeLayer(index);
+    return;
+  }
 
   // Toggle visibilidad de capa con tecla 'V'
   if (key === 'v') {
